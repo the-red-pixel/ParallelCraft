@@ -18,7 +18,7 @@ public class ThrowableHandler {
 
     public @Nonnull SRFBlockNode getHandler()
     {
-        if (handler == null)
+        if (!hasHandler())
             throw new IllegalStateException("Exception handler not initialized");
 
         return handler;
@@ -31,10 +31,15 @@ public class ThrowableHandler {
 
     public void initHandler(@Nonnull SRFBlockNode handler)
     {
-        if (this.handler != null)
+        if (hasHandler())
             throw new IllegalStateException("Exception handler already initialized");
 
         setHandler(handler);
+    }
+
+    public boolean hasHandler()
+    {
+        return this.handler != null;
     }
 
     public void setHandler(@Nonnull SRFBlockNode handler)

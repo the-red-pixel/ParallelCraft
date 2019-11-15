@@ -3,11 +3,10 @@ package org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1;
 import com.theredpixelteam.redtea.util.Pair;
 import com.theredpixelteam.redtea.util.ShouldNotReachHere;
 import com.theredpixelteam.redtea.util.Vector3;
-import org.kucro3.parallelcraft.aopeng.asm.BlockTable;
+import org.kucro3.parallelcraft.aopeng.asm.DifferentialBlockTable;
+import org.kucro3.parallelcraft.aopeng.asm.DifferentialBlockTable.*;
 import org.kucro3.parallelcraft.aopeng.asm.MethodDescriptorIterator;
-import org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1.node.EscapeNode;
-import org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1.node.InstructionNode;
-import org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1.node.StackBlankNode;
+import org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1.node.*;
 import org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1.StackComputation.Operator;
 import org.kucro3.parallelcraft.aopeng.asm.graph.VisitMeta;
 import org.kucro3.parallelcraft.aopeng.asm.graph.manipulator.GraphNodeManipulator;
@@ -19,28 +18,27 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.NotThreadSafe;
 import java.util.*;
-import java.util.function.Function;
 
 @NotThreadSafe
 public class SRFGConstructor extends MethodVisitor implements Opcodes {
-    public SRFGConstructor(@Nonnull BlockTable blockTable)
+    public SRFGConstructor(@Nonnull DifferentialBlockTable blockTable)
     {
         this(blockTable, ASM7);
     }
 
-    public SRFGConstructor(@Nonnull BlockTable blockTable,
+    public SRFGConstructor(@Nonnull DifferentialBlockTable blockTable,
                            @Nullable MethodVisitor mv)
     {
         this(blockTable, ASM7, mv);
     }
 
-    protected SRFGConstructor(@Nonnull BlockTable blockTable,
+    protected SRFGConstructor(@Nonnull DifferentialBlockTable blockTable,
                               int api)
     {
         this(blockTable, api, null);
     }
 
-    protected SRFGConstructor(@Nonnull BlockTable blockTable,
+    protected SRFGConstructor(@Nonnull DifferentialBlockTable blockTable,
                               int api,
                               @Nullable MethodVisitor mv)
     {
@@ -51,29 +49,7 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
         this.firstBlockNode = this.currentBlockNode =
                 new SRFBlockNode(new SRFBlock(this.visitMeta = new VisitMeta()));
 
-        // pre-construct all jump-targeted blocks
-        for (Label startLabel : blockTable.getStartLabels())
-            labelBlockMap.put(startLabel, new SRFBlockNode(new SRFBlock(visitMeta)));
-
-        Function<Label, SRFBlockNode> labelBlockMapping = (u) -> new SRFBlockNode(new SRFBlock(visitMeta));
-
-        // pre-construct all throwable-handled subject blocks
-        for (BlockTable.TryCatchRecord record : blockTable.getTryCatchRecords().values())
-        {
-            // put the subject block
-            SRFBlockNode blockNode =
-                    labelBlockMap.computeIfAbsent(record.getStart(), labelBlockMapping);
-
-            // put the terminal of the subject block
-            labelBlockMap.computeIfAbsent(record.getEnd(), labelBlockMapping);
-
-            // put the handler block
-            SRFBlockNode handlerBlockNode =
-                    labelBlockMap.computeIfAbsent(record.getHandler(), labelBlockMapping);
-
-            blockNode.getFlowBlock().getThrowableHandlers()
-                    .pushFirst(new ThrowableHandler(handlerBlockNode, record.getType()));
-        }
+        this.labelQuery = blockTable.createQuery();
     }
 
     @Override
@@ -354,31 +330,134 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
     @Override
     public void visitLabel(Label label)
     {
-        // check if jump referenced label
-        SRFBlockNode nextBlockNode;
-        if ((nextBlockNode = labelBlockMap.get(label)) != null)
+        LabelRecordCollection records;
+        if ((records = labelQuery.query(labelOrdinal)) != null)
         {
-            SRFBlock currentBlock = currentBlockNode.getFlowBlock();
+            boolean zeroEstablish = srfRoots.isEmpty();
 
-            if (currentBlock.isEmpty())
+            SRFBlock operatingBlock = zeroEstablish ? currentBlockNode.getFlowBlock() : new SRFBlock(visitMeta);
+            SRFBlockNode operatingBlockNode = zeroEstablish ? currentBlockNode : new SRFBlockNode(operatingBlock);
+
+            List<ThrowableHandler> newHandlers = null;
+
+            if (!zeroEstablish)
+                newHandlers = new ArrayList<>();
+
+            boolean handlerBlock = false;
+            for (LabelRecord record : records)
             {
-                // do nothing if the current block is empty
-                return;
+                TryCatchHandle handle;
+                ThrowableHandler handler;
+
+                Pair<ThrowableHandler, Boolean> pair;
+
+                switch (record.getType()) // no need to process JUMP_TARGET record
+                {
+                    case HANDLER_SCOPE_START:
+                        LabelHandlerScopeStartRecord scopeStartRecord = (LabelHandlerScopeStartRecord) record;
+                        handle = scopeStartRecord.getHandle();
+
+                        handler = new ThrowableHandler(handle.getType());
+
+                        pair = Pair.of(handler, Boolean.FALSE);
+                        if (handlerMap.putIfAbsent(handle, pair) != null)
+                            throw new IllegalStateException("Duplicated handler scope handle");
+
+                        // initialize handler if it occurred before the scope in code
+                        SRFBlockNode forwardHandler = forwardHandlers.remove(handle);
+
+                        if (forwardHandler != null)
+                        {
+                            handler.initHandler(forwardHandler);
+
+                            pair.second(Boolean.TRUE); // handler ready
+                        }
+
+                        // optimized for zero establishment
+                        if (!zeroEstablish)
+                            newHandlers.add(handler);
+                        else
+                            operatingBlock.getThrowableHandlers().pushTail(handler);
+
+                        break;
+
+                    case HANDLER_SCOPE_END:
+                        LabelHandlerScopeEndRecord scopeEndRecord = (LabelHandlerScopeEndRecord) record;
+                        handle = scopeEndRecord.getHandle();
+
+                        if ((pair = handlerMap.remove(handle)) == null)
+                            throw new IllegalStateException("Handler scope end mismatch");
+
+                        // if handler not ready, add this handler into inactive map
+                        if (!pair.second())
+                            inactiveHandlerMap.put(handle, pair.first());
+
+                        break;
+
+                    case HANDLER:
+                        LabelHandlerRecord handlerRecord = (LabelHandlerRecord) record;
+                        handle = handlerRecord.getHandle();
+
+                        // *Note: The handler block can never be embedded in the target
+                        //        throwable handling scope
+                        handler = inactiveHandlerMap.remove(handle);
+
+                        if (handler == null) // occurred before the scope in code
+                            forwardHandlers.put(handle, operatingBlockNode);
+                        else
+                            handler.initHandler(operatingBlockNode);
+
+                        handlerBlock = true;
+
+                        break;
+                }
             }
 
-            // check stack, append stack blank node if not empty
-            if (!stack.isEmpty())
-                consumeStack(stack.size(), new StackBlankNode(), false);
+            if (!zeroEstablish)
+            {
+                // add all previous unclosed handler information into the new block
+                ThrowableHandlers handlers = operatingBlock.getThrowableHandlers();
 
-            finishBlock();
+                for (Pair<ThrowableHandler, Boolean> pair : handlerMap.values())
+                    handlers.pushTail(pair.first());
 
-            // link new block after the current block
-            if (!GraphHelper.append(currentBlockNode, nextBlockNode))
-                throw new IllegalStateException("SRFGraph block linkage failure");
+                for (ThrowableHandler handler : newHandlers)
+                    handlers.pushTail(handler);
 
-            // transfer the construction process to the new block
-            currentBlockNode = nextBlockNode;
+                // check stack, append stack blank node if not empty
+                if (!stack.isEmpty())
+                {
+                    StackBlankNode stackBlank = new StackBlankNode();
+
+                    consumeStack(stack.size(), stackBlank);
+
+                    currentBlockNode.getFlowBlock().setStackBlank(stackBlank);
+                }
+
+                finishBlock();
+
+                // link new block after the current block
+                if (!GraphHelper.append(currentBlockNode, operatingBlockNode))
+                    throw new IllegalStateException("SRFGraph block linkage failure");
+
+                // transfer the construction process to the new block
+                currentBlockNode = operatingBlockNode;
+            }
+            else
+                assert handlerMap.isEmpty();
+//          ---------------------------------------------------------------------
+//          There can never be any handler inheritance under zero establishment
+//          because zero establishment means that the operating block must be the
+//          first block of the entire SRF graph.
+//          ---------------------------------------------------------------------
+
+//          initialize handler block and
+//          push capture node into stack when a handler block established
+            if (handlerBlock)
+                pushStack(new ThrowableCaptureNode(), nextSRF(), StackElementType.REFERENCE);
         }
+
+        labelOrdinal++;
 
         super.visitLabel(label);
     }
@@ -412,6 +491,8 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
         // end of previous block workflow
         stack.clear();
         srfRoots.clear();
+
+        currentRestorationSRF = -1;
     }
 
     public @Nullable SRFNode getLastNode()
@@ -422,6 +503,70 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
     public @Nonnull VisitMeta getVisitMeta()
     {
         return visitMeta;
+    }
+
+    private static boolean assert_category_from_operator(Operator operator)
+    {
+        StackElementType type = StackElementType.from(operator);
+
+        if (type == null)
+            return true;
+
+        return type.getCategory() != StackElementType.PENDING;
+    }
+
+    private static void verifySingleSlotPending(SRFNode source, StackElementType type)
+    {
+        switch (type)
+        {
+            case PENDING_X1:
+            case PENDING_XX:
+                // pass
+                break;
+
+            case PENDING_X2:
+                throw stackCategoryIncompatibility(source,
+                        StackElementType.SINGLE_SLOT, StackElementType.DUAL_SLOT);
+
+            default:
+                throw new ShouldNotReachHere();
+        }
+    }
+
+    private static void verifyDualSlotPending(SRFNode source, StackElementType type)
+    {
+        switch (type)
+        {
+            case PENDING_X2:
+            case PENDING_XX:
+                // pass
+                break;
+
+            case PENDING_X1:
+                throw stackCategoryIncompatibility(source, StackElementType.DUAL_SLOT, StackElementType.SINGLE_SLOT);
+
+            default:
+                throw new ShouldNotReachHere();
+        }
+    }
+
+    // *Note: The expected stack element type here will never be PENDING
+    private static void verifyPendingExactly(SRFNode source, StackElementType topType, StackElementType expected)
+    {
+        if (expected.getCategory() == StackElementType.SINGLE_SLOT)
+            verifySingleSlotPending(source, topType);
+        else if (expected.getCategory() == StackElementType.DUAL_SLOT)
+            verifyDualSlotPending(source, topType);
+        else
+            throw new ShouldNotReachHere();
+    }
+
+    private static void verifyType(SRFNode source, StackElementType topType, StackElementType expected)
+    {
+        if (topType.getCategory() == StackElementType.PENDING)
+            verifyPendingExactly(source, topType, expected);
+        else if (!expected.equals(topType))
+            throw stackTypeIncompatibility(source, expected, topType);
     }
 
     private void computeStack(InstructionNode source)
@@ -449,8 +594,11 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
         int consumptionDepth = 0;
         for (Operator op : consumption)
         {
-            SRFStackElement top = next(stackIterator, source);
-            StackElementType topType = top.getType();
+            StackElementType topType;
+
+            // *Note: The category of stack element type converted from stack computation
+            //        operator can never be PENDING
+            assert assert_category_from_operator(op);
 
             switch (op)
             {
@@ -464,17 +612,20 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
                 case L:
                 case S:
                 case Z:
-                    if (!top.toOperator().equals(op))
-                        throw stackTypeIncompatibility(source, op, topType);
+                    verifyType(source, next(stackIterator, source), StackElementType.require(op));
 
                     consumptionDepth++;
 
                     break;
 
                 case SX1:
-                    // only type category 1 is allowed under SX1
-                    if (topType.getCategory() != 1)
-                        throw stackCategoryIncompatibility(source, 1, topType.getCategory());
+                    topType = next(stackIterator, source);
+
+                    if (topType.getCategory() == StackElementType.PENDING)
+                        verifySingleSlotPending(source, topType);
+                    else if (topType.getCategory() != StackElementType.SINGLE_SLOT)
+                        throw stackCategoryIncompatibility(source,
+                                StackElementType.SINGLE_SLOT, StackElementType.DUAL_SLOT);
 
                     if (sx0_0 == null)
                         sx0_0 = topType;
@@ -488,12 +639,18 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
                     break;
 
                 case SX2:
-                    if (topType.getCategory() == 1)
-                    {
-                        SRFStackElement second = next(stackIterator, source);
-                        StackElementType secondType = second.getType();
+                    topType = next(stackIterator, source);
 
-                        if (secondType.getCategory() != -1)
+                    if (topType.getCategory() == StackElementType.SINGLE_SLOT
+                    || topType.equals(StackElementType.PENDING_X1))
+                    {
+                        StackElementType secondType = next(stackIterator, source);
+
+                        // rectify pending
+                        if (secondType.equals(StackElementType.PENDING_XX))
+                            secondType = StackElementType.PENDING_X1;
+
+                        if (secondType.getCategory() != 1)
                             throw stackCategoryIncompatibility(source, 1, secondType.getCategory());
 
                         if (sx0_0 == null)
@@ -511,7 +668,9 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
 
                         consumptionDepth += 2;
                     }
-                    else if (topType.getCategory() == 2)
+                    else if (topType.getCategory() == StackElementType.DUAL_SLOT
+                    || topType.equals(StackElementType.PENDING_XX)
+                    || topType.equals(StackElementType.PENDING_X2))
                     {
                         if (sx0_0 == null)
                             sx0_0 = topType;
@@ -536,8 +695,9 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
                         if (required == null)
                             throw new IllegalStateException("Corrupt field descriptor: " + fieldInsnNode.desc);
 
-                        if (!required.equals(topType))
-                            throw stackTypeIncompatibility(source, required, topType);
+                        assert required.getCategory() != StackElementType.PENDING;
+
+                        verifyType(source, next(stackIterator, source), required);
 
                         consumptionDepth++;
                     }
@@ -551,21 +711,10 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
                     {
                         MultiANewArrayInsnNode insnNode = (MultiANewArrayInsnNode) source.getNode();
 
-                        if (!StackElementType.INT.equals(top.getType()))
-                            throw stackTypeIncompatibility(source, StackElementType.INT, top.getType());
-
-                        consumptionDepth++;
-
                         int dims = insnNode.dims;
-                        for (int i = 1; i < dims; i++)
-                        {
-                            StackElementType type = next(stackIterator, source).getType();
 
-                            if (!StackElementType.INT.equals(type))
-                                throw stackTypeIncompatibility(source, StackElementType.INT, type);
-
-                            consumptionDepth++;
-                        }
+                        for (int i = 0; i < dims; i++, consumptionDepth++)
+                            verifyType(source, next(stackIterator, source), StackElementType.INT);
                     }
                     else if (opcode == INVOKEVIRTUAL || opcode == INVOKESPECIAL
                          ||  opcode == INVOKESTATIC  || opcode == INVOKEINTERFACE
@@ -592,20 +741,8 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
 
                         // due to LIFO stack, top element is computed last,
                         // so the stack element verification starts from the last parameter
-                        if (!argumentTypes[argumentCount - 1].equals(topType))
-                            throw stackTypeIncompatibility(source, argumentTypes[argumentCount - 1], topType);
-
-                        consumptionDepth++;
-
-                        for (int i = 1; i < argumentCount; i++)
-                        {
-                            StackElementType type = next(stackIterator, source).getType();
-
-                            if (!argumentTypes[argumentCount - 1 - i].equals(type))
-                                throw stackTypeIncompatibility(source, argumentTypes[argumentCount - 1 - i], type);
-
-                            consumptionDepth++;
-                        }
+                        for (int i = 0; i < argumentCount; i++, consumptionDepth++)
+                            verifyType(source, next(stackIterator, source), argumentTypes[argumentCount - 1 - i]);
                     }
                     else
                         throw new IllegalStateException("VPR operator violation in " + Integer.toHexString(opcode));
@@ -621,7 +758,7 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
             }
         }
 
-        int currentSRF = consumeStack(consumptionDepth, source, true);
+        int currentSRF = consumeStack(consumptionDepth, source);
 
         // stack production computation
         ArrayList<StackElementType> types = new ArrayList<>(production.length);
@@ -740,13 +877,42 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
         pushStack(source, currentSRF, types);
     }
 
-    private static SRFStackElement next(Iterator<SRFStackElement> stackIterator,
-                                        SRFNode source)
+    private StackElementType next(Iterator<SRFStackElement> stackIterator,
+                                 SRFNode source)
     {
-        if (!stackIterator.hasNext())
-            throw stackUnderflow(source);
+        if (stackIterator.hasNext())
+            return stackIterator.next().getType();
 
-        return stackIterator.next();
+        // stack restoration
+
+        SRFBlock currentBlock = currentBlockNode.getFlowBlock();
+
+        StackRestoreNode stackRestore;
+        boolean establish;
+
+        if (establish = (currentRestorationSRF == -1))
+        {
+            assert !currentBlock.hasStackRestoration();
+
+            currentBlock.setStackRestoration(stackRestore = new StackRestoreNode());
+            currentRestorationSRF = nextSRF();
+        }
+        else
+        {
+            stackRestore = currentBlock.getStackRestoration();
+
+            assert stackRestore != null;
+        }
+
+        // *Note: The restored element object has been pushed into the stack
+        //        and iterator has failed here.
+        //
+        //        The hasNext() method of Iterator won't do a modification check
+        //        so this won't cause a ConcurrentModificationException if this method
+        //        is called twice
+        pushStack(stackRestore, currentRestorationSRF, establish, Collections.singletonList(StackElementType.PENDING_XX));
+
+        return StackElementType.PENDING_XX;
     }
 
     private int nextSRF()
@@ -766,6 +932,11 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
 
     private void pushStack(SRFNode source, int currentSRF, List<StackElementType> types)
     {
+        pushStack(source, currentSRF, true, types);
+    }
+
+    private void pushStack(SRFNode source, int currentSRF, boolean establish, List<StackElementType> types)
+    {
         // *Note: A node without any on-stack connectivity with other node (when count == 0)
         //        will immediately establish a settled SRF.
         //
@@ -776,7 +947,7 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
         int count = types.size();
 
         // pushing a head node, establish as an unsettled SRF root
-        if (source.getManipulator().getUpperPathCount() == 0)
+        if (establish && source.getManipulator().getUpperPathCount() == 0)
             // establish a new SRF root, may be merged in future
             srfRoots.add(Vector3.of(source, Boolean.TRUE,
                     // check if first node or terminal escape
@@ -791,7 +962,7 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
     }
 
     // return current SRF
-    private int consumeStack(int count, SRFNode node, boolean pop)
+    private int consumeStack(int count, SRFNode node)
     {
         // zero consumption means establishing a new SRF
         if (count == 0)
@@ -825,18 +996,17 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
 
                 // check SRF and merge if needed
                 int sourceSRF;
-                if ((sourceSRF = stackElement.getSourceSRF()) != mergence) {
+                if ((sourceSRF = stackElement.getSourceSRF()) != mergence)
+                {
                     srfRoots.get(sourceSRF).second(Boolean.FALSE);
 
-                    if (!pop)
-                        stackElement.setSourceSRF(mergence);
+                    stackElement.setSourceSRF(mergence);
                 }
             }
         }
 
-        if (pop)
-            for (int j = 0; j < count; j++)
-                stackIterator.remove();
+        for (int j = 0; j < count; j++)
+            stackIterator.remove();
 
         if (node != null)
             lastNode = node;
@@ -883,17 +1053,28 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
         return source != null ? attach(exception, source) : exception;
     }
 
-    private static StackComputationException stackUnderflow(SRFNode source)
-    {
-        StackComputationException exception
-                = StackComputationException.underflow();
-
-        return source != null ? attach(exception, source) : exception;
-    }
+//    private static StackComputationException stackUnderflow(SRFNode source)
+//    {
+//        StackComputationException exception
+//                = StackComputationException.underflow();
+//
+//        return source != null ? attach(exception, source) : exception;
+//    }
 
     private final VisitMeta visitMeta;
 
+    private final DifferentialBlockTable.LabelRecordQuery labelQuery;
+
+    private int labelOrdinal = 0;
+
     private final Map<Label, SRFBlockNode> labelBlockMap = new HashMap<>();
+
+    private final LinkedHashMap<TryCatchHandle, Pair<ThrowableHandler, Boolean /*handler ready*/>> handlerMap
+            = new LinkedHashMap<>();
+
+    private final Map<TryCatchHandle, ThrowableHandler> inactiveHandlerMap = new HashMap<>();
+
+    private final Map<TryCatchHandle, SRFBlockNode> forwardHandlers = new HashMap<>();
 
 
     // Block workflow
@@ -901,6 +1082,8 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
     private final LinkedList<SRFStackElement> stack = new LinkedList<>();
 
     private SRFBlockNode currentBlockNode;
+
+    private int currentRestorationSRF = -1;
 
     private final SRFBlockNode firstBlockNode;
 

@@ -15,7 +15,10 @@ public enum StackElementType implements StackComputation.Computational {
     REFERENCE   ("L;",  L,  1),
     SHORT       ("S",   S,  1),
     BOOLEAN     ("Z",   Z,  1),
-    ARRAY       ("[;",  AR, 1);
+    ARRAY       ("[;",  AR, 1),
+    PENDING_X1  (null, null, 0),
+    PENDING_X2  (null, null, 0),
+    PENDING_XX  (null, null, 0);
 
     private StackElementType(String tag, StackComputation.Operator operator, int category)
     {
@@ -49,13 +52,22 @@ public enum StackElementType implements StackComputation.Computational {
         return category;
     }
 
-    public static @Nullable
-    StackElementType from(@Nonnull StackComputation.Operator operator)
+    public static @Nullable StackElementType from(@Nonnull StackComputation.Operator operator)
     {
         if (operator.ordinal() < OP2T.length)
             return OP2T[operator.ordinal()];
 
         return null;
+    }
+
+    public static @Nonnull StackElementType require(@Nonnull StackComputation.Operator operator)
+    {
+        StackElementType type = from(operator);
+
+        if (type == null)
+            throw new IllegalStateException("Unexpected operator: " + operator.name());
+
+        return type;
     }
 
     public static @Nullable StackElementType from(@Nonnull String descriptor)
@@ -80,6 +92,9 @@ public enum StackElementType implements StackComputation.Computational {
 
     static void reg(StackElementType type)
     {
+        if (type.getCategory() == 0)
+            return;
+
         if (OP2T == null)
             OP2T = new StackElementType[10];
 
@@ -93,4 +108,10 @@ public enum StackElementType implements StackComputation.Computational {
     private final StackComputation.Operator operator;
 
     private static StackElementType[] OP2T;
+
+    public static final int SINGLE_SLOT = 1;
+
+    public static final int DUAL_SLOT = 2;
+
+    public static final int PENDING = 0;
 }

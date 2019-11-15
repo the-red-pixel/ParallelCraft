@@ -36,6 +36,11 @@ public class ThrowableHandlers implements Iterable<ThrowableHandler> {
         return handlers.size();
     }
 
+    public boolean remove(@Nonnull ThrowableHandler handler)
+    {
+        return handlers.remove(handler);
+    }
+
     @Override
     public @Nonnull Iterator<ThrowableHandler> iterator()
     {
