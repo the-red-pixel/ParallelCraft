@@ -1,5 +1,7 @@
 package org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1;
 
+import org.kucro3.parallelcraft.aopeng.asm.graph.DifferentialVisitMeta;
+import org.kucro3.parallelcraft.aopeng.asm.graph.DifferentialVisitable;
 import org.kucro3.parallelcraft.aopeng.asm.graph.Node;
 import org.kucro3.parallelcraft.aopeng.asm.graph.manipulator.GraphNodeManipulator;
 
@@ -8,7 +10,7 @@ import javax.annotation.Nullable;
 import java.util.Objects;
 
 // Stack Related Flow SRFGraph
-public abstract class SRFNode implements Node<SRFNode> {
+public abstract class SRFNode implements Node<SRFNode>, DifferentialVisitable {
     protected SRFNode(@Nonnull SRFNodeType type,
                       @Nonnull GraphNodeManipulator<SRFNode> manipulator,
                       boolean bypass)
@@ -64,18 +66,31 @@ public abstract class SRFNode implements Node<SRFNode> {
         return escapeTarget;
     }
 
-    private SRF escapeTarget;
-
+    @Override
     public @Nonnull GraphNodeManipulator<SRFNode> getManipulator()
     {
         return manipulator;
     }
 
+    @Override
+    public int getVisitStamp()
+    {
+        return this.visitStamp;
+    }
+
+    @Override
+    public void setVisitStamp(int visitStamp)
+    {
+        this.visitStamp = visitStamp;
+    }
+
+    private SRF escapeTarget;
+
     protected final GraphNodeManipulator<SRFNode> manipulator;
 
     private final SRFNodeType type;
 
-    public int visitStamp;
+    private int visitStamp = DifferentialVisitMeta.DIFFERENTIAL_VISITABLE_NODE_INITIAL;
 
     private final boolean bypass;
 }

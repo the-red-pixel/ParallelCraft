@@ -1,5 +1,7 @@
 package org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1;
 
+import org.kucro3.parallelcraft.aopeng.asm.graph.DifferentialVisitMeta;
+import org.kucro3.parallelcraft.aopeng.asm.graph.DifferentialVisitable;
 import org.kucro3.parallelcraft.aopeng.asm.graph.Node;
 import org.kucro3.parallelcraft.aopeng.asm.graph.manipulator.GraphNodeManipulator;
 import org.kucro3.parallelcraft.aopeng.asm.graph.manipulator.LowerLimitedGraphNodeManipulator;
@@ -7,7 +9,7 @@ import org.kucro3.parallelcraft.aopeng.asm.graph.manipulator.LowerLimitedGraphNo
 import javax.annotation.Nonnull;
 import java.util.Objects;
 
-public class SRFBlockNode implements Node<SRFBlockNode> {
+public class SRFBlockNode implements Node<SRFBlockNode>, DifferentialVisitable {
     public SRFBlockNode(@Nonnull SRFBlock flowBlock)
     {
         this.flowBlock = Objects.requireNonNull(flowBlock);
@@ -29,6 +31,20 @@ public class SRFBlockNode implements Node<SRFBlockNode> {
     {
         this.flowBlock = Objects.requireNonNull(flowBlock);
     }
+
+    @Override
+    public int getVisitStamp()
+    {
+        return this.visitStamp;
+    }
+
+    @Override
+    public void setVisitStamp(int visitStamp)
+    {
+        this.visitStamp = visitStamp;
+    }
+
+    private int visitStamp = DifferentialVisitMeta.DIFFERENTIAL_VISITABLE_NODE_INITIAL;
 
     private SRFBlock flowBlock;
 

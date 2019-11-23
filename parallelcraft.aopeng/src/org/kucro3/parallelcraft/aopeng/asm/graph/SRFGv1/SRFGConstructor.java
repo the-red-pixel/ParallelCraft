@@ -8,7 +8,7 @@ import org.kucro3.parallelcraft.aopeng.asm.DifferentialBlockTable.*;
 import org.kucro3.parallelcraft.aopeng.asm.MethodDescriptorIterator;
 import org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1.node.*;
 import org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1.StackComputation.Operator;
-import org.kucro3.parallelcraft.aopeng.asm.graph.VisitMeta;
+import org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1.node.insn.*;
 import org.kucro3.parallelcraft.aopeng.asm.graph.manipulator.GraphNodeManipulator;
 import org.kucro3.parallelcraft.aopeng.asm.graph.util.GraphHelper;
 import org.objectweb.asm.*;
@@ -47,7 +47,7 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
         Objects.requireNonNull(blockTable, "blockTable");
 
         this.firstBlockNode = this.currentBlockNode =
-                new SRFBlockNode(new SRFBlock(this.visitMeta = new VisitMeta()));
+                new SRFBlockNode(new SRFBlock());
 
         this.labelQuery = blockTable.createQuery();
     }
@@ -105,9 +105,9 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
         super.visitInsn(opcode);
     }
 
-    private static InstructionNode insn(int opcode)
+    private InstructionNode insn(int opcode)
     {
-        return new InstructionNode(new InsnNode(opcode));
+        return new VoidInstructionNode(opcode);
     }
 
     @Override
@@ -126,9 +126,9 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
         super.visitIntInsn(opcode, operand);
     }
 
-    private static InstructionNode intInsn(int opcode, int operand)
+    private InstructionNode intInsn(int opcode, int operand)
     {
-        return new InstructionNode(new IntInsnNode(opcode, operand));
+        return new IntInstructionNode(opcode, operand);
     }
 
     @Override
@@ -145,9 +145,9 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
         super.visitVarInsn(opcode, var);
     }
 
-    private static InstructionNode varInsn(int opcode, int var)
+    private InstructionNode varInsn(int opcode, int var)
     {
-        return new InstructionNode(new VarInsnNode(opcode, var));
+        return new VarInstructionNode(opcode, var);
     }
 
     @Override
@@ -168,9 +168,9 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
         super.visitTypeInsn(opcode, type);
     }
 
-    private static InstructionNode typeInsn(int opcode, String type)
+    private InstructionNode typeInsn(int opcode, String type)
     {
-        return new InstructionNode(new TypeInsnNode(opcode, type));
+        return new TypeInstructionNode(opcode, type);
     }
 
     @Override
@@ -184,9 +184,9 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
         super.visitFieldInsn(opcode, owner, name, descriptor);
     }
 
-    private static InstructionNode fieldInsn(int opcode, String owner, String name, String descriptor)
+    private InstructionNode fieldInsn(int opcode, String owner, String name, String descriptor)
     {
-        return new InstructionNode(new FieldInsnNode(opcode, owner, name, descriptor));
+        return new FieldInstructionNode(opcode, owner, name, descriptor);
     }
 
     @Deprecated
@@ -207,9 +207,9 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
         super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
     }
 
-    private static InstructionNode methodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface)
+    private InstructionNode methodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface)
     {
-        return new InstructionNode(new MethodInsnNode(opcode, owner, name, descriptor, isInterface));
+        return new MethodInstructionNode(opcode, owner, name, descriptor, isInterface);
     }
 
     @Override
@@ -223,12 +223,12 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
         super.visitInvokeDynamicInsn(name, descriptor, bootstrapMethodHandle, bootstrapMethodArguments);
     }
 
-    private static InstructionNode invokeDynamicMethod(String name,
-                                                       String descriptor,
-                                                       Handle bootstrapMethodHandle,
-                                                       Object... bootstrapMethodArguments)
+    private InstructionNode invokeDynamicMethod(String name,
+                                                String descriptor,
+                                                Handle bootstrapMethodHandle,
+                                                Object... bootstrapMethodArguments)
     {
-        return new InstructionNode(new InvokeDynamicInsnNode(name, descriptor, bootstrapMethodHandle, bootstrapMethodArguments));
+        return new InvokeDynamicInstructionNode(INVOKEDYNAMIC, name, descriptor, bootstrapMethodHandle, bootstrapMethodArguments);
     }
 
     @Override
@@ -246,9 +246,9 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
         super.visitJumpInsn(opcode, label);
     }
 
-    private static InstructionNode jumpInsn(int opcode, Label label)
+    private InstructionNode jumpInsn(int opcode, Label label)
     {
-        return new InstructionNode(new JumpInsnNode(opcode, new LabelNode(label)));
+        return new JumpInstructionNode(opcode, acquireBlock(label));
     }
 
     @Override
@@ -259,9 +259,9 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
         super.visitLdcInsn(cst);
     }
 
-    private static InstructionNode ldcInsn(Object cst)
+    private InstructionNode ldcInsn(Object cst)
     {
-        return new InstructionNode(new LdcInsnNode(cst));
+        return new LdcInstructionNode(LDC, cst);
     }
 
     @Override
@@ -272,9 +272,9 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
         super.visitIincInsn(var, increment);
     }
 
-    private static InstructionNode iincInsn(int var, int increment)
+    private InstructionNode iincInsn(int var, int increment)
     {
-        return new InstructionNode(new IincInsnNode(var, increment));
+        return new IincInstructionNode(IINC, var, increment);
     }
 
     @Override
@@ -285,9 +285,9 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
         super.visitTableSwitchInsn(min, max, dflt, labels);
     }
 
-    private static InstructionNode tableSwitchInsn(int min, int max, Label dflt, Label... labels)
+    private InstructionNode tableSwitchInsn(int min, int max, Label dflt, Label... labels)
     {
-        return new InstructionNode(new TableSwitchInsnNode(min, max, new LabelNode(dflt), wrap(labels)));
+        return new TableSwitchInstructionNode(TABLESWITCH, min, max, acquireBlock(dflt), wrap(labels));
     }
 
     @Override
@@ -298,20 +298,31 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
         super.visitLookupSwitchInsn(dflt, keys, labels);
     }
 
-    private static InstructionNode lookupSwitchInsn(Label dflt, int[] keys, Label[] labels)
+    private InstructionNode lookupSwitchInsn(Label dflt, int[] keys, Label[] labels)
     {
-        return new InstructionNode(new LookupSwitchInsnNode(new LabelNode(dflt), keys, wrap(labels)));
+        return new LookupSwitchInstructionNode(LOOKUPSWITCH, acquireBlock(dflt), wrap(keys), wrap(labels));
     }
 
-    private static LabelNode[] wrap(Label[] labels)
+    private List<Integer> wrap(int[] keys)
+    {
+        int len = keys.length;
+
+        List<Integer> list = new ArrayList<>();
+        for (int i = 0; i < len; i++)
+            list.add(keys[i]);
+
+        return list;
+    }
+
+    private List<SRFBlockNode> wrap(Label[] labels)
     {
         int len = labels.length;
 
-        LabelNode[] nodes = new LabelNode[len];
+        List<SRFBlockNode> list = new ArrayList<>();
         for (int i = 0; i < len; i++)
-            nodes[i] = new LabelNode(labels[i]);
+            list.add(acquireBlock(labels[i]));
 
-        return nodes;
+        return list;
     }
 
     @Override
@@ -322,9 +333,9 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
         super.visitMultiANewArrayInsn(descriptor, dimension);
     }
 
-    private static InstructionNode multiANewArrayInsn(String descriptor, int dimension)
+    private InstructionNode multiANewArrayInsn(String descriptor, int dimension)
     {
-        return new InstructionNode(new MultiANewArrayInsnNode(descriptor, dimension));
+        return new MultiANewArrayInstructionNode(MULTIANEWARRAY, descriptor, dimension);
     }
 
     @Override
@@ -335,8 +346,21 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
         {
             boolean zeroEstablish = srfRoots.isEmpty();
 
-            SRFBlock operatingBlock = zeroEstablish ? currentBlockNode.getFlowBlock() : new SRFBlock(visitMeta);
-            SRFBlockNode operatingBlockNode = zeroEstablish ? currentBlockNode : new SRFBlockNode(operatingBlock);
+            SRFBlock operatingBlock;
+            SRFBlockNode operatingBlockNode;
+
+            if (zeroEstablish)
+            {
+                declareBlock(label, operatingBlockNode = currentBlockNode);
+
+                operatingBlock = currentBlockNode.getFlowBlock();
+            }
+            else
+            {
+                operatingBlockNode = acquireBlock(label);
+
+                operatingBlock = operatingBlockNode.getFlowBlock();
+            }
 
             List<ThrowableHandler> newHandlers = null;
 
@@ -462,6 +486,17 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
         super.visitLabel(label);
     }
 
+    private void declareBlock(Label label, SRFBlockNode blockNode)
+    {
+        if (labelBlockMap.put(label, blockNode) != null)
+            throw new IllegalStateException("Block redeclaration under zero-establishment");
+    }
+
+    private SRFBlockNode acquireBlock(Label label)
+    {
+        return labelBlockMap.computeIfAbsent(label, (unused) -> new SRFBlockNode(new SRFBlock()));
+    }
+
     public @Nonnull SRFGraph construct()
     {
         finishBlock();
@@ -498,11 +533,6 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
     public @Nullable SRFNode getLastNode()
     {
         return lastNode;
-    }
-
-    public @Nonnull VisitMeta getVisitMeta()
-    {
-        return visitMeta;
     }
 
     private static boolean assert_category_from_operator(Operator operator)
@@ -571,7 +601,7 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
 
     private void computeStack(InstructionNode source)
     {
-        int opcode = source.getNode().getOpcode();
+        int opcode = source.getOpcode();
 
         Pair<Operator[], Operator[]> computation = StackComputation.get(opcode);
 
@@ -689,11 +719,11 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
                 case PR1:
                     if (opcode == PUTSTATIC || opcode == PUTFIELD)
                     {
-                        FieldInsnNode fieldInsnNode = (FieldInsnNode) source.getNode();
-                        StackElementType required = StackElementType.from(fieldInsnNode.desc);
+                        FieldInstructionNode fieldInsnNode = (FieldInstructionNode) source;
+                        StackElementType required = StackElementType.from(fieldInsnNode.getDescriptor());
 
                         if (required == null)
-                            throw new IllegalStateException("Corrupt field descriptor: " + fieldInsnNode.desc);
+                            throw new IllegalStateException("Corrupt field descriptor: " + fieldInsnNode.getDescriptor());
 
                         assert required.getCategory() != StackElementType.PENDING;
 
@@ -709,9 +739,9 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
                 case VPR:
                     if (opcode == MULTIANEWARRAY)
                     {
-                        MultiANewArrayInsnNode insnNode = (MultiANewArrayInsnNode) source.getNode();
+                        MultiANewArrayInstructionNode insnNode = (MultiANewArrayInstructionNode) source;
 
-                        int dims = insnNode.dims;
+                        int dims = insnNode.getDimension();
 
                         for (int i = 0; i < dims; i++, consumptionDepth++)
                             verifyType(source, next(stackIterator, source), StackElementType.INT);
@@ -720,8 +750,8 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
                          ||  opcode == INVOKESTATIC  || opcode == INVOKEINTERFACE
                          ||  opcode == INVOKEDYNAMIC)
                     {
-                        MethodInsnNode insnNode = (MethodInsnNode) source.getNode();
-                        descIterator = new MethodDescriptorIterator(insnNode.desc);
+                        MethodInstructionNode insnNode = (MethodInstructionNode) source;
+                        descIterator = new MethodDescriptorIterator(insnNode.getDescriptor());
 
                         descIterator.complete();
 
@@ -805,11 +835,8 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
                 case PR1:
                     if (opcode == LDC)
                     {
-                        LdcInsnNode insnNode = (LdcInsnNode) source.getNode();
-                        Object cst = insnNode.cst;
-
-                        if (cst == null)
-                            throw new IllegalStateException("empty load constant");
+                        LdcInstructionNode insnNode = (LdcInstructionNode) source;
+                        Object cst = insnNode.getConstant();
 
                         if (cst instanceof Integer)
                             types.add(StackElementType.INT);
@@ -832,11 +859,11 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
                     }
                     else if (opcode == GETSTATIC || opcode == GETFIELD)
                     {
-                        FieldInsnNode insnNode = (FieldInsnNode) source.getNode();
-                        StackElementType field = StackElementType.from(insnNode.desc);
+                        FieldInstructionNode insnNode = (FieldInstructionNode) source;
+                        StackElementType field = StackElementType.from(insnNode.getDescriptor());
 
                         if (field == null)
-                            throw new IllegalStateException("Corrupt field descriptor: " + insnNode.desc);
+                            throw new IllegalStateException("Corrupt field descriptor: " + insnNode.getDescriptor());
 
                         types.add(field);
                     }
@@ -1060,8 +1087,6 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
 //
 //        return source != null ? attach(exception, source) : exception;
 //    }
-
-    private final VisitMeta visitMeta;
 
     private final DifferentialBlockTable.LabelRecordQuery labelQuery;
 
