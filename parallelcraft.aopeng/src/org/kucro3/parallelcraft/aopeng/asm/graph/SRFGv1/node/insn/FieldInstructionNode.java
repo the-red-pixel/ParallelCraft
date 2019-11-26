@@ -1,6 +1,12 @@
 package org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1.node.insn;
 
+import org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1.SRFBlockNode;
+import org.objectweb.asm.tree.FieldInsnNode;
+import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.LabelNode;
+
 import javax.annotation.Nonnull;
+import java.util.Map;
 import java.util.Objects;
 
 public class FieldInstructionNode extends InstructionNode {
@@ -14,6 +20,12 @@ public class FieldInstructionNode extends InstructionNode {
         this.descriptor = Objects.requireNonNull(descriptor, "descriptor");
         this.name = Objects.requireNonNull(name, "name");
         this.owner = Objects.requireNonNull(owner, "owner");
+    }
+
+    @Override
+    public void accept(@Nonnull InsnList insnList, @Nonnull Map<SRFBlockNode, LabelNode> blockLabelMap)
+    {
+        insnList.add(new FieldInsnNode(getOpcode(), getOwner(), getName(), getDescriptor()));
     }
 
     public void setDescriptor(@Nonnull String descriptor)

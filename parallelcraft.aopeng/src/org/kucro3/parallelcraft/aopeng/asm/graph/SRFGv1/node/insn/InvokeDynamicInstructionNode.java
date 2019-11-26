@@ -1,8 +1,13 @@
 package org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1.node.insn;
 
+import org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1.SRFBlockNode;
 import org.objectweb.asm.Handle;
+import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.InvokeDynamicInsnNode;
+import org.objectweb.asm.tree.LabelNode;
 
 import javax.annotation.Nonnull;
+import java.util.Map;
 import java.util.Objects;
 
 public class InvokeDynamicInstructionNode extends InstructionNode {
@@ -18,6 +23,12 @@ public class InvokeDynamicInstructionNode extends InstructionNode {
         this.descriptor = Objects.requireNonNull(descriptor, "descriptor");
         this.bootstrapMethod = Objects.requireNonNull(bootstrapMethod, "bootstrapMethod");
         this.bootstrapArguments = bootstrapArguments;
+    }
+
+    @Override
+    public void accept(@Nonnull InsnList insnList, @Nonnull Map<SRFBlockNode, LabelNode> blockLabelMap)
+    {
+        insnList.add(new InvokeDynamicInsnNode(getName(), getDescriptor(), getBootstrapMethod(), getBootstrapArguments()));
     }
 
     public void setBootstrapMethod(@Nonnull Handle bootstrapMethod)

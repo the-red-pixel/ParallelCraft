@@ -1,14 +1,16 @@
 package org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1.node.insn;
 
+import org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1.SRFBlockNode;
 import org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1.SRFGv1NodeTypes;
 import org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1.SRFNode;
 import org.kucro3.parallelcraft.aopeng.asm.graph.manipulator.GraphNodeManipulator;
 import org.kucro3.parallelcraft.aopeng.asm.graph.manipulator.NormalGraphNodeManipulator;
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.LabelNode;
 
 import javax.annotation.Nonnull;
-import java.util.Objects;
+import java.util.List;
+import java.util.Map;
 
 public abstract class InstructionNode extends SRFNode {
     protected InstructionNode(int opcode, int type)
@@ -24,6 +26,31 @@ public abstract class InstructionNode extends SRFNode {
 
         this.opcode = opcode;
         this.type = type;
+    }
+
+    public abstract void accept(@Nonnull InsnList insnList,
+                                @Nonnull Map<SRFBlockNode, LabelNode> blockLabelMap);
+
+
+    static LabelNode require(SRFBlockNode key, Map<SRFBlockNode, LabelNode> blockLabelMap)
+    {
+        LabelNode label = blockLabelMap.get(key);
+
+        if (label == null)
+            throw new IllegalArgumentException("unmapped block target");
+
+        return label;
+    }
+
+    static LabelNode[] require(List<SRFBlockNode> keyList, Map<SRFBlockNode, LabelNode> blockLabelMap)
+    {
+        LabelNode[] labels = new LabelNode[keyList.size()];
+
+        int i = 0;
+        for (SRFBlockNode key : keyList)
+            labels[i++] = require(key, blockLabelMap);
+
+        return labels;
     }
 
     public int getOpcode()

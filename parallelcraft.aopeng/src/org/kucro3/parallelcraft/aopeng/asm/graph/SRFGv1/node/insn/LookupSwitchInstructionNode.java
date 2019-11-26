@@ -1,10 +1,14 @@
 package org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1.node.insn;
 
 import org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1.SRFBlockNode;
+import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.LabelNode;
+import org.objectweb.asm.tree.LookupSwitchInsnNode;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class LookupSwitchInstructionNode extends InstructionNode {
@@ -26,6 +30,26 @@ public class LookupSwitchInstructionNode extends InstructionNode {
                                        @Nonnull SRFBlockNode[] targets)
     {
         this(opcode, defaultTarget, toArrayList(keys), toArrayList(targets));
+    }
+
+    @Override
+    public void accept(@Nonnull InsnList insnList, @Nonnull Map<SRFBlockNode, LabelNode> blockLabelMap)
+    {
+        insnList.add(new LookupSwitchInsnNode(
+                require(getDefaultTarget(), blockLabelMap),
+                toArray(getKeys()),
+                require(getTargets(), blockLabelMap)));
+    }
+
+    private static int[] toArray(List<Integer> list)
+    {
+        int[] arr = new int[list.size()];
+
+        int i = 0;
+        for (Integer val : list)
+            arr[i++] = val;
+
+        return arr;
     }
 
     private static List<SRFBlockNode> toArrayList(SRFBlockNode[] targets)

@@ -1,10 +1,14 @@
 package org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1.node.insn;
 
 import org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1.SRFBlockNode;
+import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.LabelNode;
+import org.objectweb.asm.tree.TableSwitchInsnNode;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class TableSwitchInstructionNode extends InstructionNode {
@@ -29,6 +33,17 @@ public class TableSwitchInstructionNode extends InstructionNode {
                                       @Nonnull SRFBlockNode... targets)
     {
         this(opcode, min, max, defaultTarget, toArrayList(targets));
+    }
+
+
+    @Override
+    public void accept(@Nonnull InsnList insnList, @Nonnull Map<SRFBlockNode, LabelNode> blockLabelMap)
+    {
+        insnList.add(new TableSwitchInsnNode(
+                getMin(),
+                getMax(),
+                require(getDefaultTarget(), blockLabelMap),
+                require(getTargets(), blockLabelMap)));
     }
 
     private static List<SRFBlockNode> toArrayList(SRFBlockNode[] targets)
