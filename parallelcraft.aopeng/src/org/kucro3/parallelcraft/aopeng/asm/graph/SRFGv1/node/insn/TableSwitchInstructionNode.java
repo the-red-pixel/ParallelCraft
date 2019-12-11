@@ -37,13 +37,15 @@ public class TableSwitchInstructionNode extends InstructionNode {
 
 
     @Override
-    public void accept(@Nonnull InsnList insnList, @Nonnull Map<SRFBlockNode, LabelNode> blockLabelMap)
+    public void accept(@Nonnull InsnList insnList,
+                       @Nonnull Map<SRFBlockNode, LabelNode> blockLabelMap,
+                       boolean createLabelIfAbsent)
     {
         insnList.add(new TableSwitchInsnNode(
                 getMin(),
                 getMax(),
-                require(getDefaultTarget(), blockLabelMap),
-                require(getTargets(), blockLabelMap)));
+                require(getDefaultTarget(), blockLabelMap, createLabelIfAbsent),
+                require(getTargets(), blockLabelMap, createLabelIfAbsent)));
     }
 
     private static List<SRFBlockNode> toArrayList(SRFBlockNode[] targets)

@@ -26,6 +26,16 @@ public interface GraphNodeManipulator<T extends Node<T>> {
         return getUpperPaths().get(index);
     }
 
+    public default @Nonnull Path<T> peekUpperPath()
+    {
+        return getUpperPath(0);
+    }
+
+    public default @Nonnull T peekUpperNode()
+    {
+        return peekUpperPath().getUpperNode();
+    }
+
     public default int getUpperPathCount()
     {
         return getUpperPaths().size();
@@ -46,6 +56,16 @@ public interface GraphNodeManipulator<T extends Node<T>> {
     public default @Nonnull Path<T> getLowerPath(int index)
     {
         return getLowerPaths().get(index);
+    }
+
+    public default @Nonnull Path<T> peekLowerPath()
+    {
+        return getLowerPath(0);
+    }
+
+    public default @Nonnull T peekLowerNode()
+    {
+        return peekLowerPath().getLowerNode();
     }
 
     public default int getLowerPathCount()

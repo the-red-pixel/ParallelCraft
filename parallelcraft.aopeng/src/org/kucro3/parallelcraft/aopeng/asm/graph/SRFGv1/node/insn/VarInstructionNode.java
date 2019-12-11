@@ -17,7 +17,9 @@ public class VarInstructionNode extends InstructionNode {
     }
 
     @Override
-    public void accept(@Nonnull InsnList insnList, @Nonnull Map<SRFBlockNode, LabelNode> blockLabelMap)
+    public void accept(@Nonnull InsnList insnList,
+                       @Nonnull Map<SRFBlockNode, LabelNode> blockLabelMap,
+                       boolean createLabelIfAbsent)
     {
         insnList.add(new VarInsnNode(getOpcode(), getOperand()));
     }

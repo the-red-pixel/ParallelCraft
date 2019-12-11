@@ -29,12 +29,17 @@ public abstract class InstructionNode extends SRFNode {
     }
 
     public abstract void accept(@Nonnull InsnList insnList,
-                                @Nonnull Map<SRFBlockNode, LabelNode> blockLabelMap);
+                                @Nonnull Map<SRFBlockNode, LabelNode> blockLabelMap,
+                                boolean createLabelIfAbsent);
 
 
-    static LabelNode require(SRFBlockNode key, Map<SRFBlockNode, LabelNode> blockLabelMap)
+    static LabelNode require(SRFBlockNode key,
+                             Map<SRFBlockNode, LabelNode> blockLabelMap,
+                             boolean createLabelIfAbsent)
     {
-        LabelNode label = blockLabelMap.get(key);
+        LabelNode label = createLabelIfAbsent
+                ? blockLabelMap.computeIfAbsent(key, (unused) -> new LabelNode())
+                : blockLabelMap.get(key);
 
         if (label == null)
             throw new IllegalArgumentException("unmapped block target");
@@ -42,13 +47,15 @@ public abstract class InstructionNode extends SRFNode {
         return label;
     }
 
-    static LabelNode[] require(List<SRFBlockNode> keyList, Map<SRFBlockNode, LabelNode> blockLabelMap)
+    static LabelNode[] require(List<SRFBlockNode> keyList,
+                               Map<SRFBlockNode, LabelNode> blockLabelMap,
+                               boolean createLabelIfAbsent)
     {
         LabelNode[] labels = new LabelNode[keyList.size()];
 
         int i = 0;
         for (SRFBlockNode key : keyList)
-            labels[i++] = require(key, blockLabelMap);
+            labels[i++] = require(key, blockLabelMap, createLabelIfAbsent);
 
         return labels;
     }

@@ -33,12 +33,14 @@ public class LookupSwitchInstructionNode extends InstructionNode {
     }
 
     @Override
-    public void accept(@Nonnull InsnList insnList, @Nonnull Map<SRFBlockNode, LabelNode> blockLabelMap)
+    public void accept(@Nonnull InsnList insnList,
+                       @Nonnull Map<SRFBlockNode, LabelNode> blockLabelMap,
+                       boolean createLabelIfAbsent)
     {
         insnList.add(new LookupSwitchInsnNode(
-                require(getDefaultTarget(), blockLabelMap),
+                require(getDefaultTarget(), blockLabelMap, createLabelIfAbsent),
                 toArray(getKeys()),
-                require(getTargets(), blockLabelMap)));
+                require(getTargets(), blockLabelMap, createLabelIfAbsent)));
     }
 
     private static int[] toArray(List<Integer> list)

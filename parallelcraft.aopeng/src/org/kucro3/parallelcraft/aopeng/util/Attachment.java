@@ -2,9 +2,9 @@ package org.kucro3.parallelcraft.aopeng.util;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.WeakHashMap;
 
 @SuppressWarnings("unchecked")
 public class Attachment {
@@ -16,6 +16,11 @@ public class Attachment {
     public boolean hasAttachment(@Nonnull AttachmentKey<?> key)
     {
         return attachmentMap.containsKey(Objects.requireNonNull(key));
+    }
+
+    public void removeAttachment(@Nonnull AttachmentKey<?> key)
+    {
+        attachmentMap.remove(key);
     }
 
     public @Nullable <T> T putAttachment(@Nonnull AttachmentKey<T> key, @Nonnull T value)
@@ -31,5 +36,5 @@ public class Attachment {
         putAttachment(key, value);
     }
 
-    private final Map<AttachmentKey<?>, Object> attachmentMap = new HashMap<>();
+    private final Map<AttachmentKey<?>, Object> attachmentMap = new WeakHashMap<>();
 }

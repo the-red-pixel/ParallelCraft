@@ -41,7 +41,8 @@ public class IincInstructionNode extends InstructionNode {
 
     @Override
     public void accept(@Nonnull InsnList insnList,
-                       @Nonnull Map<SRFBlockNode, LabelNode> blockLabelMap)
+                       @Nonnull Map<SRFBlockNode, LabelNode> blockLabelMap,
+                       boolean createLabelIfAbsent)
     {
         insnList.add(new IincInsnNode(getTargetLocal(), getIncrement()));
     }
