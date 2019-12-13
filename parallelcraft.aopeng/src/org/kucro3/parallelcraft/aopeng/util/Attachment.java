@@ -25,7 +25,8 @@ public class Attachment {
 
     public @Nullable <T> T putAttachment(@Nonnull AttachmentKey<T> key, @Nonnull T value)
     {
-        if (!Objects.requireNonNull(key).getType().isInstance(Objects.requireNonNull(value)))
+        if (key instanceof TypeAttributed)
+        if (!((TypeAttributed) Objects.requireNonNull(key)).getType().isInstance(Objects.requireNonNull(value)))
             throw new ClassCastException();
 
         return (T) attachmentMap.put(key, value);

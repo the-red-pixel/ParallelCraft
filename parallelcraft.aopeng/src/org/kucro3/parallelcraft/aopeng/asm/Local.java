@@ -3,6 +3,7 @@ package org.kucro3.parallelcraft.aopeng.asm;
 import org.kucro3.parallelcraft.aopeng.util.Attachable;
 import org.kucro3.parallelcraft.aopeng.util.Attachment;
 import org.kucro3.parallelcraft.aopeng.util.AttachmentKey;
+import org.kucro3.parallelcraft.aopeng.util.TypeAttributedAttachmentKey;
 import org.objectweb.asm.Label;
 
 import javax.annotation.Nonnull;
@@ -30,9 +31,9 @@ public interface Local extends Attachable {
         ALLOCATION
     }
 
-    public static final AttachmentKey<String> ATTACHMENT_NAME = AttachmentKey.create(String.class);
+    public static final AttachmentKey<String> ATTACHMENT_NAME = TypeAttributedAttachmentKey.create(String.class);
 
-    public static final AttachmentKey<Label> ATTACHMENT_START_LABEL = AttachmentKey.create(Label.class);
+    public static final AttachmentKey<Label> ATTACHMENT_START_LABEL = TypeAttributedAttachmentKey.create(Label.class);
 
-    public static final AttachmentKey<Label> ATTACHMENT_END_LABEL = AttachmentKey.create(Label.class);
+    public static final AttachmentKey<Label> ATTACHMENT_END_LABEL = TypeAttributedAttachmentKey.create(Label.class);
 }

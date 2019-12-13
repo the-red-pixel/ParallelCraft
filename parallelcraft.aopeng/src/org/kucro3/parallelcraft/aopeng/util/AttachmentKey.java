@@ -1,23 +1,12 @@
 package org.kucro3.parallelcraft.aopeng.util;
 
-import javax.annotation.Nonnull;
-import java.util.Objects;
-
 public class AttachmentKey<T> {
-    AttachmentKey(Class<?> type)
+    AttachmentKey()
     {
-        this.type = type;
     }
 
-    public static <T> AttachmentKey<T> create(Class<T> type)
+    public static <T> AttachmentKey<T> create()
     {
-        return new AttachmentKey<>(Objects.requireNonNull(type));
+        return new AttachmentKey<>();
     }
-
-    public @Nonnull Class<?> getType()
-    {
-        return type;
-    }
-
-    private final Class<?> type;
 }

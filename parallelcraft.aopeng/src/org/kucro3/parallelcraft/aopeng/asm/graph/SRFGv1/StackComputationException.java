@@ -3,6 +3,7 @@ package org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1;
 import org.kucro3.parallelcraft.aopeng.util.Attachable;
 import org.kucro3.parallelcraft.aopeng.util.Attachment;
 import org.kucro3.parallelcraft.aopeng.util.AttachmentKey;
+import org.kucro3.parallelcraft.aopeng.util.TypeAttributedAttachmentKey;
 
 import javax.annotation.Nonnull;
 import java.util.Objects;
@@ -52,7 +53,7 @@ public class StackComputationException extends RuntimeException implements Attac
     private final Attachment attachment = new Attachment();
 
     public static final AttachmentKey<SRFNode> ATTACHMENT_SOURCE_SRFG_NODE
-            = AttachmentKey.create(SRFNode.class);
+            = TypeAttributedAttachmentKey.create(SRFNode.class);
 
     @Override
     public @Nonnull Attachment getAttachments()
