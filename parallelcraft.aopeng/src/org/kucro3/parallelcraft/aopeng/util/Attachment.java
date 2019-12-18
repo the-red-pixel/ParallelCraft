@@ -5,6 +5,8 @@ import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.Objects;
 import java.util.WeakHashMap;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 @SuppressWarnings("unchecked")
 public class Attachment {
@@ -26,10 +28,45 @@ public class Attachment {
     public @Nullable <T> T putAttachment(@Nonnull AttachmentKey<T> key, @Nonnull T value)
     {
         if (key instanceof TypeAttributed)
-        if (!((TypeAttributed) Objects.requireNonNull(key)).getType().isInstance(Objects.requireNonNull(value)))
-            throw new ClassCastException();
+            if (!((TypeAttributed) Objects.requireNonNull(key)).getType().isInstance(Objects.requireNonNull(value)))
+                throw new ClassCastException();
 
         return (T) attachmentMap.put(key, value);
+    }
+
+    public @Nonnull <T> T computeIfAbsent(@Nonnull AttachmentKey<T> key,
+                                          @Nonnull Function<AttachmentKey<T>, T> computation)
+    {
+        if (key instanceof TypeAttributed)
+            return (T) attachmentMap.computeIfAbsent(key,
+                    (Function<? super AttachmentKey<?>, ?>) (k) -> {
+                        T object = computation.apply((AttachmentKey<T>) k);
+
+                        if (!((TypeAttributed) k).getType().isInstance(Objects.requireNonNull(object)))
+                            throw new ClassCastException();
+
+                        return object;
+                    });
+        else
+            return (T) attachmentMap.computeIfAbsent(key, (Function<? super AttachmentKey<?>, ?>) computation);
+    }
+
+    public @Nullable <T> T computeIfPresent(@Nonnull AttachmentKey<T> key,
+                                            @Nonnull BiFunction<AttachmentKey<T>, T, T> computation)
+    {
+        if (key instanceof TypeAttributed)
+            return (T) attachmentMap.computeIfPresent(key,
+                    (BiFunction<? super AttachmentKey, ? super Object, ?>) (k, v) -> {
+                        T object = computation.apply((AttachmentKey<T>) k, (T) v);
+
+                        if (!((TypeAttributed) k).getType().isInstance(Objects.requireNonNull(object)))
+                            throw new ClassCastException();
+
+                        return object;
+                    });
+        else
+            return (T) attachmentMap.computeIfPresent(key,
+                    (BiFunction<? super AttachmentKey<?>, ? super Object, ?>) (k, v) -> computation);
     }
 
     public <T> void setAttachment(@Nonnull AttachmentKey<T> key, @Nonnull T value)
