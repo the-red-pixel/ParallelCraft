@@ -3,10 +3,12 @@ package org.kucro3.parallelcraft.aopeng.util;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.WeakHashMap;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 @SuppressWarnings("unchecked")
 public class Attachment {
@@ -18,6 +20,28 @@ public class Attachment {
     public boolean hasAttachment(@Nonnull AttachmentKey<?> key)
     {
         return attachmentMap.containsKey(Objects.requireNonNull(key));
+    }
+
+    public @Nonnull <T> T requireAttachment(@Nonnull AttachmentKey<T> key)
+    {
+        T object = getAttachment(key);
+
+        if (object == null)
+            throw new NoSuchElementException(key.toString());
+
+        return object;
+    }
+
+    public @Nonnull <T, E extends Throwable> T requireAttachment(@Nonnull AttachmentKey<T> key,
+                                                                 @Nonnull Supplier<E> exceptionSupplier)
+            throws E
+    {
+        T object = getAttachment(key);
+
+        if (object == null)
+            throw exceptionSupplier.get();
+
+        return object;
     }
 
     public void removeAttachment(@Nonnull AttachmentKey<?> key)

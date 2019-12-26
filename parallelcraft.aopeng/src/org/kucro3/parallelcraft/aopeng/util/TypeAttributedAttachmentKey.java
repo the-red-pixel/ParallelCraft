@@ -4,7 +4,7 @@ import javax.annotation.Nonnull;
 import java.util.Objects;
 
 public class TypeAttributedAttachmentKey<T> extends AttachmentKey<T> implements TypeAttributed {
-    TypeAttributedAttachmentKey(Class<?> type)
+    TypeAttributedAttachmentKey(Class<T> type)
     {
         this.type = type;
     }
@@ -14,11 +14,10 @@ public class TypeAttributedAttachmentKey<T> extends AttachmentKey<T> implements 
         return new TypeAttributedAttachmentKey<>(Objects.requireNonNull(type));
     }
 
-    public @Nonnull
-    Class<?> getType()
+    public @Nonnull Class<T> getType()
     {
         return type;
     }
 
-    private final Class<?> type;
+    private final Class<T> type;
 }
