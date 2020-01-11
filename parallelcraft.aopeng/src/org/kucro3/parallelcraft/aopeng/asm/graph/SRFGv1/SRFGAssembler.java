@@ -12,6 +12,7 @@ import org.kucro3.parallelcraft.aopeng.asm.graph.manipulator.GraphNodeManipulato
 import org.kucro3.parallelcraft.aopeng.util.AttachmentKey;
 import org.kucro3.parallelcraft.aopeng.util.TypeAttributedAttachmentKey;
 import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.JumpInsnNode;
@@ -48,8 +49,12 @@ public class SRFGAssembler {
     //        so the context objects are all managed by pool. This makes the process
     //        of assembling and tail recursion more efficient and the pool can be shared
     //        with different assemblers, but not concurrently.
-    public InsnList assemble()
+    //
+    //        *Stack frames are not computed by this assembler*
+    public void accept(@Nonnull MethodVisitor mv)
     {
+        mv.visitCode();
+
         DifferentialVisitMeta visitMeta = graph.getVisitMeta();
 
         SRFNodeContextPool nodeContextPool = getNodeContextPool();
@@ -59,8 +64,6 @@ public class SRFGAssembler {
         blockContextPool.reset();
 
         List<SRFBlockNode> jumpTargets = new ArrayList<>();
-
-        InsnList rootInsnList = new InsnList();
 
         // initialize root
         blockContextPool.acquire(graph.getRoot(), new InsnList());
@@ -106,10 +109,10 @@ public class SRFGAssembler {
                     //        of the next block, but it simplifies the process appending
                     //        an ending label to the terminal.
                     //
-                    // append the start label and end label of the block
+                    LabelNode startLabel, endLabel;
                     InsnList blockInsnList = blockContext.requireBlockInsnList();
 
-                    blockInsnList.insert(acquireLabel(blockNode));
+                    blockInsnList.insert(startLabel = acquireStartLabel(blockNode));
 
                     visitMeta.visit(blockNode);
 
@@ -143,10 +146,18 @@ public class SRFGAssembler {
                         }
                     }
 
-                    blockInsnList.add(acquireEndLabel(blockNode));
+                    blockInsnList.add(endLabel = acquireEndLabel(blockNode));
 
                     //
-                    rootInsnList.add(blockInsnList);
+                    blockInsnList.accept(mv);
+
+                    // process throwable handlers
+                    for (ThrowableHandler handler : blockNode.getFlowBlock().getThrowableHandlers())
+                        mv.visitTryCatchBlock(
+                                startLabel.getLabel(),
+                                endLabel.getLabel(),
+                                acquireStartLabel(handler.getHandler()).getLabel(),
+                                handler.getHandlingType());
 
                     break;
             }
@@ -397,9 +408,7 @@ public class SRFGAssembler {
             }
         }
 
-        // TODO further process for exception & handler table
-
-        return rootInsnList;
+        mv.visitEnd();
     }
 
     public @Nonnull DifferentialVisitMeta getVisitMeta()
@@ -493,7 +502,7 @@ public class SRFGAssembler {
         return node.getAttachments().getAttachment(blockContextAttachmentKey);
     }
 
-    @Nonnull LabelNode acquireLabel(SRFBlockNode blockNode)
+    @Nonnull LabelNode acquireStartLabel(SRFBlockNode blockNode)
     {
         return blockLabelMap.computeIfAbsent(blockNode, (unused) -> new LabelNode(new Label()));
     }
