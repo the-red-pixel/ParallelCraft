@@ -60,6 +60,11 @@ public abstract class InstructionNode extends SRFNode {
         return labels;
     }
 
+    public String toString()
+    {
+        return Integer.toHexString(opcode);
+    }
+
     public int getOpcode()
     {
         return opcode;

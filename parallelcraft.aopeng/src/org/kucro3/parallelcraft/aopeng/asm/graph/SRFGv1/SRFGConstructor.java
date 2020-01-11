@@ -448,16 +448,6 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
                 for (ThrowableHandler handler : newHandlers)
                     handlers.pushTail(handler);
 
-                // check stack, append stack blank node if not empty
-                if (!stack.isEmpty())
-                {
-                    StackBlankNode stackBlank = new StackBlankNode();
-
-                    consumeStack(stack.size(), stackBlank);
-
-                    currentBlockNode.getFlowBlock().setStackBlank(stackBlank);
-                }
-
                 finishBlock();
 
                 // link new block after the current block
@@ -507,6 +497,16 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
     private void finishBlock()
     {
         SRFBlock currentBlock = currentBlockNode.getFlowBlock();
+
+        // check stack, append stack blank node if not empty
+        if (!stack.isEmpty())
+        {
+            StackBlankNode stackBlank = new StackBlankNode();
+
+            consumeStack(stack.size(), stackBlank);
+
+            currentBlockNode.getFlowBlock().setStackBlank(stackBlank);
+        }
 
         // add all roots not merged into the block
         List<SRF> assuredSRF = currentBlock.getSRFs();
@@ -769,8 +769,8 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
                             if ((argumentTypes[i] = StackElementType.from(arguments[i])) == null)
                                 throw new IllegalStateException("Corrupt method parameter descriptor: " + arguments[i]);
 
-                        // due to LIFO stack, top element is computed last,
-                        // so the stack element verification starts from the last parameter
+                        // Note*: Due to LIFO stack, top element is computed last,
+                        //        so the stack element verification starts from the last parameter
                         for (int i = 0; i < argumentCount; i++, consumptionDepth++)
                             verifyType(source, next(stackIterator, source), argumentTypes[argumentCount - 1 - i]);
                     }
@@ -791,121 +791,121 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
         int currentSRF = consumeStack(consumptionDepth, source);
 
         // stack production computation
-        ArrayList<StackElementType> types = new ArrayList<>(production.length);
-        for (Operator op : production)
+        List<StackElementType> types;
+
+        if (production.length > 0)
         {
-            switch (op)
-            {
-                case AR:
-                case B:
-                case C:
-                case D:
-                case F:
-                case I:
-                case J:
-                case L:
-                case S:
-                case Z:
-                    types.add(StackElementType.from(op));
+            types = new ArrayList<>(production.length);
+            for (Operator op : production) {
+                switch (op) {
+                    case AR:
+                    case B:
+                    case C:
+                    case D:
+                    case F:
+                    case I:
+                    case J:
+                    case L:
+                    case S:
+                    case Z:
+                        types.add(StackElementType.from(op));
 
-                    break;
+                        break;
 
-                case X0:
-                    if (sx0_0 == null)
-                        throw new IllegalStateException("X0 operator mismatch");
+                    case X0:
+                        if (sx0_0 == null)
+                            throw new IllegalStateException("X0 operator mismatch");
 
-                    types.add(sx0_0);
+                        types.add(sx0_0);
 
-                    if (sx0_1 != null)
-                        types.add(sx0_1);
+                        if (sx0_1 != null)
+                            types.add(sx0_1);
 
-                    break;
+                        break;
 
-                case X1:
-                    if (sx1_0 == null)
-                        throw new IllegalStateException("X1 operator mismatch");
+                    case X1:
+                        if (sx1_0 == null)
+                            throw new IllegalStateException("X1 operator mismatch");
 
-                    types.add(sx1_0);
+                        types.add(sx1_0);
 
-                    if (sx1_1 != null)
-                        types.add(sx1_1);
+                        if (sx1_1 != null)
+                            types.add(sx1_1);
 
-                    break;
+                        break;
 
-                case PR1:
-                    if (opcode == LDC)
-                    {
-                        LdcInstructionNode insnNode = (LdcInstructionNode) source;
-                        Object cst = insnNode.getConstant();
+                    case PR1:
+                        if (opcode == LDC) {
+                            LdcInstructionNode insnNode = (LdcInstructionNode) source;
+                            Object cst = insnNode.getConstant();
 
-                        if (cst instanceof Integer)
-                            types.add(StackElementType.INT);
-                        else if (cst instanceof Float)
-                            types.add(StackElementType.FLOAT);
-                        else if (cst instanceof Long)
-                            types.add(StackElementType.LONG);
-                        else if (cst instanceof Double)
-                            types.add(StackElementType.DOUBLE);
-                        else if (cst instanceof String)
-                            types.add(StackElementType.REFERENCE);
-                        else if (cst instanceof Type)
-                            types.add(StackElementType.REFERENCE);
-                        else if (cst instanceof Handle)
-                            types.add(StackElementType.REFERENCE);
-                        else if (cst instanceof ConstantDynamic)
-                            types.add(StackElementType.REFERENCE);
-                        else
-                            throw new IllegalStateException("illegal type in load constant: " + cst.getClass());
-                    }
-                    else if (opcode == GETSTATIC || opcode == GETFIELD)
-                    {
-                        FieldInstructionNode insnNode = (FieldInstructionNode) source;
-                        StackElementType field = StackElementType.from(insnNode.getDescriptor());
+                            if (cst instanceof Integer)
+                                types.add(StackElementType.INT);
+                            else if (cst instanceof Float)
+                                types.add(StackElementType.FLOAT);
+                            else if (cst instanceof Long)
+                                types.add(StackElementType.LONG);
+                            else if (cst instanceof Double)
+                                types.add(StackElementType.DOUBLE);
+                            else if (cst instanceof String)
+                                types.add(StackElementType.REFERENCE);
+                            else if (cst instanceof Type)
+                                types.add(StackElementType.REFERENCE);
+                            else if (cst instanceof Handle)
+                                types.add(StackElementType.REFERENCE);
+                            else if (cst instanceof ConstantDynamic)
+                                types.add(StackElementType.REFERENCE);
+                            else
+                                throw new IllegalStateException("illegal type in load constant: " + cst.getClass());
+                        } else if (opcode == GETSTATIC || opcode == GETFIELD) {
+                            FieldInstructionNode insnNode = (FieldInstructionNode) source;
+                            StackElementType field = StackElementType.from(insnNode.getDescriptor());
 
-                        if (field == null)
-                            throw new IllegalStateException("Corrupt field descriptor: " + insnNode.getDescriptor());
+                            if (field == null)
+                                throw new IllegalStateException("Corrupt field descriptor: " + insnNode.getDescriptor());
 
-                        types.add(field);
-                    }
-                    else if (opcode >= 0xB6 && opcode <= 0xBA)
+                            types.add(field);
+                        } else if (opcode >= 0xB6 && opcode <= 0xBA)
                         // invokevirtual, invokespecial, invokestatic,
                         // invokeinterface, invokedynamic
-                    {
-                        if (descIterator == null)
-                            throw new ShouldNotReachHere();
+                        {
+                            if (descIterator == null)
+                                throw new ShouldNotReachHere();
 
-                        String returnDesc = descIterator.getReturnType();
+                            String returnDesc = descIterator.getReturnType();
 
-                        if (returnDesc.equals("V"))
-                            break;
+                            if (returnDesc.equals("V"))
+                                break;
 
-                        StackElementType returnType = StackElementType.from(returnDesc);
+                            StackElementType returnType = StackElementType.from(returnDesc);
 
-                        if (returnType == null)
-                            throw new IllegalStateException("Corrupt method descriptor: " + descIterator.getDescriptor());
+                            if (returnType == null)
+                                throw new IllegalStateException("Corrupt method descriptor: " + descIterator.getDescriptor());
 
-                        types.add(returnType);
-                    }
-                    else
-                        throw new IllegalStateException("PR1 operator violation in " + Integer.toHexString(opcode));
+                            types.add(returnType);
+                        } else
+                            throw new IllegalStateException("PR1 operator violation in " + Integer.toHexString(opcode));
 
-                    break;
+                        break;
 
-                case VPR:
-                case SX1:
-                case SX2:
-                    throw new IllegalStateException(op.name() + " operator now allowed in production");
+                    case VPR:
+                    case SX1:
+                    case SX2:
+                        throw new IllegalStateException(op.name() + " operator now allowed in production");
 
-                default:
-                    throw new ShouldNotReachHere();
+                    default:
+                        throw new ShouldNotReachHere();
+                }
             }
         }
+        else
+            types = Collections.emptyList();
 
         pushStack(source, currentSRF, types);
     }
 
     private StackElementType next(Iterator<SRFStackElement> stackIterator,
-                                 SRFNode source)
+                                  SRFNode source)
     {
         if (stackIterator.hasNext())
             return stackIterator.next().getType();
@@ -936,7 +936,7 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
         //
         //        The hasNext() method of Iterator won't do a modification check
         //        so this won't cause a ConcurrentModificationException if this method
-        //        is called twice
+        //        is called twice.
         pushStack(stackRestore, currentRestorationSRF, establish, Collections.singletonList(StackElementType.PENDING_XX));
 
         return StackElementType.PENDING_XX;
@@ -1033,7 +1033,7 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
         }
 
         for (int j = 0; j < count; j++)
-            stackIterator.remove();
+            stack.pop();
 
         if (node != null)
             lastNode = node;
@@ -1163,18 +1163,19 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
             SRFNode node = top.getUpperNode();
             GraphNodeManipulator<SRFNode> manipulator = node.getManipulator();
 
-            if (manipulator.getLowerPathCount() == 0)
-            {
-                // encountering terminal node
-                // might be on-stack malformation but no need to fix it
+            // *Note: Encountering terminal node and this might be on-stack malformation,
+            //        but this occurs before inserting StackBlank node and no need to fix it.
 
-                node.setEscapeTarget(target);
-
-                return;
-            }
+//          if (manipulator.getLowerPathCount() == 0)
+//          {
+//              node.setEscapeTarget(target);
+//
+//              return;
+//          }
 
             // insert the escape node to the top-stack path
-            GraphHelper.insertAndPush(manipulator.getLowerPath(0) , new EscapeNode(target));
+            if (!GraphHelper.insertAndPush(manipulator.getLowerPath(0) , new EscapeNode(target)))
+                throw new IllegalStateException("connective escape insertion failure");
         }
 
         private final SRFStackElement top;

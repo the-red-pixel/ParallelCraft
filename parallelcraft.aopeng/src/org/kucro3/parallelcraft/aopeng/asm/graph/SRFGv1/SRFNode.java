@@ -68,6 +68,14 @@ public abstract class SRFNode implements Node<SRFNode>, DifferentialVisitable, A
         return escapeTarget;
     }
 
+    public @Nonnull SRF requireEscapeTarget()
+    {
+        if (escapeTarget == null)
+            throw new IllegalStateException("Escape target not initialized");
+
+        return escapeTarget;
+    }
+
     @Override
     public @Nonnull GraphNodeManipulator<SRFNode> getManipulator()
     {

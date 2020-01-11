@@ -41,6 +41,11 @@ public interface GraphNodeManipulator<T extends Node<T>> {
         return getUpperPaths().size();
     }
 
+    public default boolean hasUpperPath()
+    {
+        return getUpperPathCount() > 0;
+    }
+
     public default boolean hasLowerLimit()
     {
         return false;
@@ -71,6 +76,11 @@ public interface GraphNodeManipulator<T extends Node<T>> {
     public default int getLowerPathCount()
     {
         return getLowerPaths().size();
+    }
+
+    public default boolean hasLowerPath()
+    {
+        return getLowerPathCount() > 0;
     }
 
     public boolean unlink();

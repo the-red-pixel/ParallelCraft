@@ -25,6 +25,9 @@ public class SRFBlock implements Attachable {
     @Override
     public @Nonnull Attachment getAttachments()
     {
+        if (attachment == null)
+            return attachment = new Attachment();
+
         return attachment;
     }
 
@@ -76,5 +79,5 @@ public class SRFBlock implements Attachable {
 
     private final ThrowableHandlers handlers = new ThrowableHandlers();
 
-    private final Attachment attachment = new Attachment();
+    private Attachment attachment;
 }

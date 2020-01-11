@@ -1,12 +1,21 @@
 package org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1;
 
+import org.kucro3.parallelcraft.aopeng.asm.graph.DifferentialVisitMeta;
+
 import javax.annotation.Nonnull;
 import java.util.Objects;
 
 public class SRFGraph {
     public SRFGraph(@Nonnull SRFBlockNode root)
     {
-        this.root = Objects.requireNonNull(root);
+        this(root, new DifferentialVisitMeta());
+    }
+
+    public SRFGraph(@Nonnull SRFBlockNode root,
+                    @Nonnull DifferentialVisitMeta visitMeta)
+    {
+        this.root = Objects.requireNonNull(root, "root");
+        this.visitMeta = Objects.requireNonNull(visitMeta, "visitMeta");
     }
 
     public @Nonnull SRFBlockNode getRoot()
@@ -14,5 +23,17 @@ public class SRFGraph {
         return root;
     }
 
+    public @Nonnull DifferentialVisitMeta getVisitMeta()
+    {
+        return visitMeta;
+    }
+
+    public void setVisitMeta(@Nonnull DifferentialVisitMeta visitMeta)
+    {
+        this.visitMeta = Objects.requireNonNull(visitMeta);
+    }
+
     private final SRFBlockNode root;
+
+    private DifferentialVisitMeta visitMeta;
 }
