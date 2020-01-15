@@ -45,6 +45,12 @@ public class SRFStackElement implements StackComputation.Computational {
         return type.toOperator();
     }
 
+    @Override
+    public @Nonnull String toString()
+    {
+        return type.toString();
+    }
+
     private int sourceSRF;
 
     private final SRFNode upperNode;

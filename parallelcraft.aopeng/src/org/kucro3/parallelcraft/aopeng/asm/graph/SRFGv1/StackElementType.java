@@ -3,28 +3,36 @@ package org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import java.util.NoSuchElementException;
+
 import static org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1.StackComputation.Operator.*;
 
 public enum StackElementType implements StackComputation.Computational {
-    BYTE        ("B",   B,  1),
-    CHAR        ("C",   C,  1),
+    INT         ("I",   I,  1),
+    BYTE        ("B",   B,  1, INT),
+    CHAR        ("C",   C,  1, INT),
     DOUBLE      ("D",   D,  2),
     FLOAT       ("F",   F,  1),
-    INT         ("I",   I,  1),
     LONG        ("J",   J,  2),
     REFERENCE   ("L;",  L,  1),
-    SHORT       ("S",   S,  1),
-    BOOLEAN     ("Z",   Z,  1),
-    ARRAY       ("[;",  AR, 1),
-    PENDING_X1  (null, null, 0),
-    PENDING_X2  (null, null, 0),
-    PENDING_XX  (null, null, 0);
+    SHORT       ("S",   S,  1, INT),
+    BOOLEAN     ("Z",   Z,  1, INT),
+    ARRAY       ("[;",  AR, 1, REFERENCE),
+    PENDING_X1  ("#P1", null, 0),
+    PENDING_X2  ("#P2", null, 0),
+    PENDING_XX  ("#PX", null, 0);
 
     private StackElementType(String tag, StackComputation.Operator operator, int category)
+    {
+        this(tag, operator, category, null);
+    }
+
+    private StackElementType(String tag, StackComputation.Operator operator, int category, StackElementType primary)
     {
         this.tag = tag;
         this.operator = operator;
         this.category = category;
+        this.primary = primary;
 
         reg(this);
     }
@@ -50,6 +58,24 @@ public enum StackElementType implements StackComputation.Computational {
     public int getCategory()
     {
         return category;
+    }
+
+    public boolean hasPrimary()
+    {
+        return primary != null;
+    }
+
+    public @Nullable StackElementType getPrimary()
+    {
+        return primary;
+    }
+
+    public @Nonnull StackElementType requirePrimary()
+    {
+        if (primary == null)
+            throw new NoSuchElementException();
+
+        return primary;
     }
 
     public static @Nullable StackElementType from(@Nonnull StackComputation.Operator operator)
@@ -102,6 +128,8 @@ public enum StackElementType implements StackComputation.Computational {
     }
 
     private final int category;
+
+    private final StackElementType primary;
 
     private final String tag;
 

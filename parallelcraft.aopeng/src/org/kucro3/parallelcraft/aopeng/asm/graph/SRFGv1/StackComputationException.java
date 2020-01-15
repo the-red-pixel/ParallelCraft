@@ -90,6 +90,12 @@ public class StackComputationException extends RuntimeException implements Attac
             {
                 return CauseCategories.STACK_UNDERFLOW;
             }
+
+            @Override
+            public @Nonnull String toString()
+            {
+                return "Stack underflow";
+            }
         }
 
         public static class TypeIncompatibility implements Cause
@@ -117,6 +123,12 @@ public class StackComputationException extends RuntimeException implements Attac
                 return found;
             }
 
+            @Override
+            public @Nonnull String toString()
+            {
+                return "Stack element type incompatibility. Expected: " + expected + ", found: " + found;
+            }
+
             private final StackElementType expected, found;
         }
 
@@ -142,6 +154,11 @@ public class StackComputationException extends RuntimeException implements Attac
             public int getFoundCategory()
             {
                 return found;
+            }
+
+            public @Nonnull String toString()
+            {
+                return "Stack element category incompatibility. Expected " + expected + ", found: " + found;
             }
 
             private final int expected;

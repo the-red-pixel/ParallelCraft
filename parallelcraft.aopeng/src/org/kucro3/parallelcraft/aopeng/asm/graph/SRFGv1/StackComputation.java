@@ -62,7 +62,7 @@ public final class StackComputation implements Opcodes {
         insns[DCONST_0]         = p(o(),                    o(D));
         insns[DCONST_1]         = p(o(),                    o(D));
         insns[BIPUSH]           = p(o(),                    o(B));
-        insns[SIPUSH]           = p(o(I),                   o());
+        insns[SIPUSH]           = p(o(),                    o(S));
         insns[LDC]              = p(o(),                    o(PR1));
 
         insns[ILOAD]            = p(o(),                    o(I));
@@ -203,10 +203,10 @@ public final class StackComputation implements Opcodes {
         insns[GETFIELD]         = p(o(L),                   o(PR1));
         insns[PUTFIELD]         = p(o(PR1, L),              o());
 
-        insns[INVOKEVIRTUAL]    = p(o(L,   VPR),            o(PR1));
-        insns[INVOKESPECIAL]    = p(o(L,   VPR),            o(PR1));
+        insns[INVOKEVIRTUAL]    = p(o(VPR, L),              o(PR1));
+        insns[INVOKESPECIAL]    = p(o(VPR, L),              o(PR1));
         insns[INVOKESTATIC]     = p(o(VPR),                 o(PR1));
-        insns[INVOKEINTERFACE]  = p(o(L,   VPR),            o(PR1));
+        insns[INVOKEINTERFACE]  = p(o(VPR, L),              o(PR1));
         insns[INVOKEDYNAMIC]    = p(o(VPR),                 o(PR1));
 
         insns[NEW]              = p(o(),                    o(L));

@@ -596,7 +596,13 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
         if (topType.getCategory() == StackElementType.PENDING)
             verifyPendingExactly(source, topType, expected);
         else if (!expected.equals(topType))
+        {
+            if (topType.hasPrimary())
+                if (expected.equals(topType.requirePrimary()))
+                    return;
+
             throw stackTypeIncompatibility(source, expected, topType);
+        }
     }
 
     private void computeStack(InstructionNode source)
@@ -750,15 +756,23 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
                          ||  opcode == INVOKESTATIC  || opcode == INVOKEINTERFACE
                          ||  opcode == INVOKEDYNAMIC)
                     {
-                        MethodInstructionNode insnNode = (MethodInstructionNode) source;
-                        descIterator = new MethodDescriptorIterator(insnNode.getDescriptor());
+                        if (opcode != INVOKEDYNAMIC)
+                        {
+                            MethodInstructionNode insnNode = (MethodInstructionNode) source;
+                            descIterator = new MethodDescriptorIterator(insnNode.getDescriptor());
+                        }
+                        else
+                        {
+                            InvokeDynamicInstructionNode insnNode = (InvokeDynamicInstructionNode) source;
+                            descIterator = new MethodDescriptorIterator(insnNode.getDescriptor());
+                        }
 
                         descIterator.complete();
 
                         String[] arguments = descIterator.getArguments();
                         int argumentCount = arguments.length;
 
-                        // break if zero parameter
+                        // break if zero operand
                         if (argumentCount == 0)
                             break;
 
@@ -891,7 +905,7 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
                     case VPR:
                     case SX1:
                     case SX2:
-                        throw new IllegalStateException(op.name() + " operator now allowed in production");
+                        throw new IllegalStateException(op.name() + " operator not allowed in production");
 
                     default:
                         throw new ShouldNotReachHere();
