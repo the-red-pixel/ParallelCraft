@@ -25,15 +25,15 @@ import javax.annotation.concurrent.NotThreadSafe;
 import java.util.*;
 
 @NotThreadSafe
-public class SRFGAssembler {
-    public SRFGAssembler(@Nonnull SRFGraph graph)
+public class SRFGv1Assembler {
+    public SRFGv1Assembler(@Nonnull SRFGv1 graph)
     {
         this.graph = Objects.requireNonNull(graph, "graph");
     }
 
-    public SRFGAssembler(@Nonnull SRFGraph graph,
-                         @Nonnull SRFNodeContextPool nodeContextPool,
-                         @Nonnull SRFBlockContextPool blockContextPool)
+    public SRFGv1Assembler(@Nonnull SRFGv1 graph,
+                           @Nonnull SRFNodeContextPool nodeContextPool,
+                           @Nonnull SRFBlockContextPool blockContextPool)
     {
         this(graph);
 
@@ -416,7 +416,8 @@ public class SRFGAssembler {
         return graph.getVisitMeta();
     }
 
-    public @Nonnull SRFGraph getGraph()
+    public @Nonnull
+    SRFGv1 getGraph()
     {
         return graph;
     }
@@ -453,14 +454,14 @@ public class SRFGAssembler {
         blockContextAttachmentKey = TypeAttributedAttachmentKey.create(SRFBlockContext.class);
     }
 
-    public void reset(@Nonnull SRFGraph graph)
+    public void reset(@Nonnull SRFGv1 graph)
     {
         reset();
 
         this.graph = Objects.requireNonNull(graph, "graph");
     }
 
-    public void reset(@Nonnull SRFGraph graph,
+    public void reset(@Nonnull SRFGv1 graph,
                       @Nonnull SRFNodeContextPool nodeContextPool,
                       @Nonnull SRFBlockContextPool blockContextPool)
     {
@@ -526,7 +527,7 @@ public class SRFGAssembler {
 
     private final Map<SRFBlockNode, LabelNode> blockEndLabelMap = new HashMap<>();
 
-    private SRFGraph graph;
+    private SRFGv1 graph;
 
     public static class InsnCluster
     {

@@ -5,14 +5,14 @@ import org.kucro3.parallelcraft.aopeng.asm.graph.DifferentialVisitMeta;
 import javax.annotation.Nonnull;
 import java.util.Objects;
 
-public class SRFGraph {
-    public SRFGraph(@Nonnull SRFBlockNode root)
+public class SRFGv1 {
+    public SRFGv1(@Nonnull SRFBlockNode root)
     {
         this(root, new DifferentialVisitMeta());
     }
 
-    public SRFGraph(@Nonnull SRFBlockNode root,
-                    @Nonnull DifferentialVisitMeta visitMeta)
+    public SRFGv1(@Nonnull SRFBlockNode root,
+                  @Nonnull DifferentialVisitMeta visitMeta)
     {
         this.root = Objects.requireNonNull(root, "root");
         this.visitMeta = Objects.requireNonNull(visitMeta, "visitMeta");

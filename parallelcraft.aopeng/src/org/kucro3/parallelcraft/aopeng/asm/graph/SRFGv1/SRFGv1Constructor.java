@@ -12,7 +12,6 @@ import org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1.node.insn.*;
 import org.kucro3.parallelcraft.aopeng.asm.graph.manipulator.GraphNodeManipulator;
 import org.kucro3.parallelcraft.aopeng.asm.graph.util.GraphHelper;
 import org.objectweb.asm.*;
-import org.objectweb.asm.tree.*;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -20,27 +19,27 @@ import javax.annotation.concurrent.NotThreadSafe;
 import java.util.*;
 
 @NotThreadSafe
-public class SRFGConstructor extends MethodVisitor implements Opcodes {
-    public SRFGConstructor(@Nonnull DifferentialBlockTable blockTable)
+public class SRFGv1Constructor extends MethodVisitor implements Opcodes {
+    public SRFGv1Constructor(@Nonnull DifferentialBlockTable blockTable)
     {
         this(blockTable, ASM7);
     }
 
-    public SRFGConstructor(@Nonnull DifferentialBlockTable blockTable,
-                           @Nullable MethodVisitor mv)
+    public SRFGv1Constructor(@Nonnull DifferentialBlockTable blockTable,
+                             @Nullable MethodVisitor mv)
     {
         this(blockTable, ASM7, mv);
     }
 
-    protected SRFGConstructor(@Nonnull DifferentialBlockTable blockTable,
-                              int api)
+    protected SRFGv1Constructor(@Nonnull DifferentialBlockTable blockTable,
+                                int api)
     {
         this(blockTable, api, null);
     }
 
-    protected SRFGConstructor(@Nonnull DifferentialBlockTable blockTable,
-                              int api,
-                              @Nullable MethodVisitor mv)
+    protected SRFGv1Constructor(@Nonnull DifferentialBlockTable blockTable,
+                                int api,
+                                @Nullable MethodVisitor mv)
     {
         super(api, mv);
 
@@ -487,11 +486,12 @@ public class SRFGConstructor extends MethodVisitor implements Opcodes {
         return labelBlockMap.computeIfAbsent(label, (unused) -> new SRFBlockNode(new SRFBlock()));
     }
 
-    public @Nonnull SRFGraph construct()
+    public @Nonnull
+    SRFGv1 construct()
     {
         finishBlock();
 
-        return new SRFGraph(firstBlockNode);
+        return new SRFGv1(firstBlockNode);
     }
 
     private void finishBlock()
