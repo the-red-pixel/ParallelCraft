@@ -13,12 +13,14 @@ import java.lang.annotation.Target;
 public @interface Shadow {
     /**
      * 影射域的名称
+     *
      * @return 名称，默认为直接声明名称
      */
     public String value() default "";
 
     /**
      * 所影射的域的声明范围
+     *
      * @return 声明范围，默认为{@link Scope#GLOBAL}
      */
     public Scope scope() default Scope.GLOBAL;

@@ -24,8 +24,9 @@ public @interface Promote {
     public Scope scope() default Scope.LOCAL;
 
     /**
-     * 当此标志为真，并且环境中以及存在同名的域，则此标记的作用将相同于{@link Shadow}
-     * @return
+     * 当此标志为真，并且环境中已经存在同名的域，则此标记的作用将相同于{@link Shadow}
+     *
+     * @return 标志
      */
     public boolean ifAbsent() default false;
 }

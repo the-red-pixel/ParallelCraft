@@ -2,11 +2,21 @@ package org.kucro3.parallelcraft.aopeng.asm.graph.manipulator;
 
 import org.kucro3.parallelcraft.aopeng.asm.graph.Node;
 import org.kucro3.parallelcraft.aopeng.asm.graph.Path;
+import org.kucro3.parallelcraft.aopeng.asm.graph.manipulator.result.IntManipulationResult;
+import org.kucro3.parallelcraft.aopeng.asm.graph.manipulator.result.ManipulationResult;
 
 import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
 import java.util.*;
 
+/**
+ * 抽象类。提供一些基本的节点管理操作。
+ *
+ * @see org.kucro3.parallelcraft.aopeng.asm.graph.manipulator.GraphNodeManipulator
+ *
+ * @param <T> 节点类型
+ */
+@SuppressWarnings("ConstantConditions")
 public abstract class AbstractGraphNodeManipulator<T extends Node<T>> implements GraphNodeManipulator<T> {
     @Override
     public @Nonnull List<Path<T>> getUpperPaths()
@@ -21,7 +31,7 @@ public abstract class AbstractGraphNodeManipulator<T extends Node<T>> implements
     }
 
     @Override
-    public boolean unlink()
+    public @Nonnull ManipulationResult unlink()
     {
         if (getUpperPathCount() == getLowerPathCount())
         {
@@ -40,21 +50,23 @@ public abstract class AbstractGraphNodeManipulator<T extends Node<T>> implements
                 upperPath.setLowerNode(lowerPath.getLowerNode());
                 upperPath.setLowerOrdinal(lowerPath.getLowerOrdinal());
 
-                if (!lowerPath.getLowerNode().getManipulator().setUpperPath(lowerPath.getLowerOrdinal(), upperPath))
-                    throw new IllegalStateException("Corrupt SRFGv1 graph, failed to unlink");
+                ManipulationResult result;
+                if (!(result = lowerPath.getLowerNode().getManipulator().setUpperPath(lowerPath.getLowerOrdinal(), upperPath))
+                        .isPassed())
+                    throw new IllegalStateException("Failed to unlink: " + result.requireMessage());
             }
 
             clearUpperPaths();
             clearLowerPaths();
 
-            return true;
+            return ManipulationResult.passed();
         }
 
-        return false;
+        return ManipulationResult.failed("different upper and lower count");
     }
 
     @Override
-    public boolean setUpperPath(@Nonnegative int ordinal, @Nonnull Path<T> path)
+    public @Nonnull ManipulationResult setUpperPath(@Nonnegative int ordinal, @Nonnull Path<T> path)
     {
         Objects.requireNonNull(path);
 
@@ -62,30 +74,28 @@ public abstract class AbstractGraphNodeManipulator<T extends Node<T>> implements
             throw new IllegalArgumentException("ordinal cannot be negative");
 
         if (ordinal == upperPaths.size())
-            return appendUpperPath(path) >= 0;
+            return appendUpperPath(path);
         else
             upperPaths.set(ordinal, path);
 
-        return true;
+        return ManipulationResult.passed();
     }
 
     @Override
-    public void truncateUpperPath()
+    public @Nonnull Path<T> truncateUpperPath()
     {
-        if (!upperPaths.isEmpty())
-            upperPaths.removeLast();
+        return upperPaths.removeLast();
     }
 
     @Override
-    public void popUpperPath()
+    public @Nonnull Path<T> popUpperPath()
     {
-        if (!upperPaths.isEmpty())
-        {
-            upperPaths.removeFirst();
+        Path<T> removed = upperPaths.removeFirst();
 
-            for (Path<T> pathAfter : upperPaths)
-                pathAfter.decLowerOrdinal();
-        }
+        for (Path<T> pathAfter : upperPaths)
+            pathAfter.decLowerOrdinal();
+
+        return removed;
     }
 
     @Override
@@ -95,16 +105,16 @@ public abstract class AbstractGraphNodeManipulator<T extends Node<T>> implements
     }
 
     @Override
-    public int appendUpperPath(@Nonnull Path<T> path)
+    public @Nonnull IntManipulationResult appendUpperPath(@Nonnull Path<T> path)
     {
         Objects.requireNonNull(path);
 
         upperPaths.addLast(path);
-        return upperPaths.size() - 1;
+        return IntManipulationResult.passed(upperPaths.size() - 1);
     }
 
     @Override
-    public boolean pushUpperPath(@Nonnull Path<T> path)
+    public @Nonnull ManipulationResult pushUpperPath(@Nonnull Path<T> path)
     {
         Objects.requireNonNull(path);
 
@@ -113,11 +123,11 @@ public abstract class AbstractGraphNodeManipulator<T extends Node<T>> implements
 
         upperPaths.addFirst(path);
 
-        return true;
+        return ManipulationResult.passed();
     }
 
     @Override
-    public boolean setLowerPath(@Nonnegative int ordinal, @Nonnull Path<T> path)
+    public @Nonnull ManipulationResult setLowerPath(@Nonnegative int ordinal, @Nonnull Path<T> path)
     {
         Objects.requireNonNull(path);
 
@@ -125,30 +135,28 @@ public abstract class AbstractGraphNodeManipulator<T extends Node<T>> implements
             throw new IllegalArgumentException("ordinal cannot be negative");
 
         if (ordinal == lowerPaths.size())
-            return appendLowerPath(path) >= 0;
+            return appendLowerPath(path);
         else
             lowerPaths.set(ordinal, path);
 
-        return true;
+        return ManipulationResult.passed();
     }
 
     @Override
-    public void truncateLowerPath()
+    public @Nonnull Path<T> truncateLowerPath()
     {
-        if (!lowerPaths.isEmpty())
-            lowerPaths.removeLast();
+        return lowerPaths.removeLast();
     }
 
     @Override
-    public void popLowerPath()
+    public @Nonnull Path<T> popLowerPath()
     {
-         if (!lowerPaths.isEmpty())
-         {
-             lowerPaths.removeFirst();
+        Path<T> path = lowerPaths.removeFirst();
 
-             for (Path<T> pathAfter : lowerPaths)
-                 pathAfter.decUpperOrdinal();
-         }
+        for (Path<T> pathAfter : lowerPaths)
+            pathAfter.decUpperOrdinal();
+
+        return path;
     }
 
     @Override
@@ -158,16 +166,16 @@ public abstract class AbstractGraphNodeManipulator<T extends Node<T>> implements
     }
 
     @Override
-    public int appendLowerPath(@Nonnull Path<T> path)
+    public @Nonnull IntManipulationResult appendLowerPath(@Nonnull Path<T> path)
     {
         Objects.requireNonNull(path);
 
         lowerPaths.addLast(path);
-        return lowerPaths.size() - 1;
+        return IntManipulationResult.passed(lowerPaths.size() - 1);
     }
 
     @Override
-    public boolean pushLowerPath(@Nonnull Path<T> path)
+    public @Nonnull ManipulationResult pushLowerPath(@Nonnull Path<T> path)
     {
         Objects.requireNonNull(path);
 
@@ -176,10 +184,8 @@ public abstract class AbstractGraphNodeManipulator<T extends Node<T>> implements
 
         lowerPaths.addFirst(path);
 
-        return true;
+        return ManipulationResult.passed();
     }
-
-    protected T node;
 
     protected final LinkedList<Path<T>> upperPaths = new LinkedList<>();
 

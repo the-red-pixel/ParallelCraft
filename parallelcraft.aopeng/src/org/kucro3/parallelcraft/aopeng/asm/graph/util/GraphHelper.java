@@ -3,6 +3,8 @@ package org.kucro3.parallelcraft.aopeng.asm.graph.util;
 import org.kucro3.parallelcraft.aopeng.asm.graph.Node;
 import org.kucro3.parallelcraft.aopeng.asm.graph.Path;
 import org.kucro3.parallelcraft.aopeng.asm.graph.manipulator.GraphNodeManipulator;
+import org.kucro3.parallelcraft.aopeng.asm.graph.manipulator.result.IntManipulationResult;
+import org.kucro3.parallelcraft.aopeng.asm.graph.manipulator.result.ManipulationResult;
 
 import javax.annotation.Nonnull;
 
@@ -11,9 +13,9 @@ public final class GraphHelper {
     {
     }
 
-    public static <T extends Node<T>> boolean append(@Nonnull T dst,
-                                                     @Nonnull T src,
-                                                     boolean phantom)
+    public static @Nonnull <T extends Node<T>> ManipulationResult append(@Nonnull T dst,
+                                                                         @Nonnull T src,
+                                                                         boolean phantom)
     {
         // ordinal not initialized at this moment
         Path<T> path = new Path<>(dst, 0, src, 0, phantom);
@@ -24,31 +26,37 @@ public final class GraphHelper {
 
         int lowerOrdinal, upperOrdinal;
 
-        if ((upperOrdinal = dstManipulator.appendLowerPath(path)) < 0)
-            return false;
+        IntManipulationResult result;
 
-        if ((lowerOrdinal = srcManipulator.appendUpperPath(path)) < 0)
+        if (!(result = dstManipulator.appendLowerPath(path)).isPassed())
+            return result;
+
+        upperOrdinal = result.getValue();
+
+        if (!(result = srcManipulator.appendUpperPath(path)).isPassed())
         {
             dstManipulator.truncateLowerPath();
 
-            return false;
+            return result;
         }
+
+        lowerOrdinal = result.getValue();
 
         path.setUpperOrdinal(upperOrdinal);
         path.setLowerOrdinal(lowerOrdinal);
 
-        return true;
+        return ManipulationResult.passed();
     }
 
-    public static <T extends Node<T>> boolean append(@Nonnull T dst,
-                                                     @Nonnull T src)
+    public static @Nonnull <T extends Node<T>> ManipulationResult append(@Nonnull T dst,
+                                                                         @Nonnull T src)
     {
         return append(dst, src, false);
     }
 
-    public static <T extends Node<T>> boolean push(@Nonnull T dst,
-                                                   @Nonnull T src,
-                                                   boolean phantom)
+    public static @Nonnull <T extends Node<T>> ManipulationResult push(@Nonnull T dst,
+                                                                       @Nonnull T src,
+                                                                       boolean phantom)
     {
         // ordinal is 0 in push operation
         Path<T> path = new Path<>(dst, 0, src, 0, phantom);
@@ -57,86 +65,96 @@ public final class GraphHelper {
                 dstManipulator = dst.getManipulator(),
                 srcManipulator = src.getManipulator();
 
-        if (!dstManipulator.pushLowerPath(path))
-            return false;
+        ManipulationResult result;
 
-        if (!srcManipulator.pushUpperPath(path))
+        if (!(result = dstManipulator.pushLowerPath(path)).isPassed())
+            return result;
+
+        if (!(result = srcManipulator.pushUpperPath(path)).isPassed())
         {
             dstManipulator.truncateLowerPath();
 
-            return false;
+            return result;
         }
 
-        return true;
+        return ManipulationResult.passed();
     }
 
-    public static <T extends Node<T>> boolean push(@Nonnull T dst,
-                                                   @Nonnull T src)
+    public static @Nonnull <T extends Node<T>> ManipulationResult push(@Nonnull T dst,
+                                                                       @Nonnull T src)
     {
         return push(dst, src, false);
     }
 
-    public static <T extends Node<T>> boolean insertAndPush(@Nonnull Path<T> dst,
-                                                            @Nonnull T src,
-                                                            boolean lowerPhantom)
+    public static @Nonnull <T extends Node<T>> ManipulationResult insertAndPush(@Nonnull Path<T> dst,
+                                                                                @Nonnull T src,
+                                                                                boolean lowerPhantom)
     {
         GraphNodeManipulator<T> manipulator = src.getManipulator();
 
-        if (!manipulator.pushUpperPath(dst))
-            return false;
+        ManipulationResult result;
+
+        if (!(result = manipulator.pushUpperPath(dst)).isPassed())
+            return result;
 
         Path<T> lowerPath = new Path<>(src, 0, dst.getLowerNode(), dst.getLowerOrdinal(), lowerPhantom);
 
-        if (!manipulator.pushLowerPath(lowerPath))
+        if (!(result = manipulator.pushLowerPath(lowerPath)).isPassed())
         {
             manipulator.popUpperPath();
 
-            return false;
+            return result;
         }
 
         dst.setLowerNode(src);
         dst.setLowerOrdinal(0);
 
-        return true;
+        return ManipulationResult.passed();
     }
 
-    public static <T extends Node<T>> boolean insertAndPush(@Nonnull Path<T> dst,
-                                                            @Nonnull T src)
+    public static @Nonnull <T extends Node<T>> ManipulationResult insertAndPush(@Nonnull Path<T> dst,
+                                                                                @Nonnull T src)
     {
         return insertAndPush(dst, src, false);
     }
 
-    public static <T extends Node<T>> boolean insertAndAppend(@Nonnull Path<T> dst,
-                                                              @Nonnull T src,
-                                                              boolean lowerPhantom)
+    public static @Nonnull <T extends Node<T>> ManipulationResult insertAndAppend(@Nonnull Path<T> dst,
+                                                                                  @Nonnull T src,
+                                                                                  boolean lowerPhantom)
     {
         GraphNodeManipulator<T> manipulator = src.getManipulator();
 
+        IntManipulationResult result;
+
         int upperPathOrdinal;
-        if ((upperPathOrdinal = manipulator.appendUpperPath(dst)) < 0)
-            return false;
+        if (!(result = manipulator.appendUpperPath(dst)).isPassed())
+            return result;
+
+        upperPathOrdinal = result.getValue();
 
         // upper ordinal not initialized
         Path<T> lowerPath = new Path<>(src, 0, dst.getLowerNode(), dst.getLowerOrdinal(), lowerPhantom);
 
         int lowerPathOrdinal;
-        if ((lowerPathOrdinal = manipulator.appendLowerPath(lowerPath)) < 0)
+        if (!(result = manipulator.appendLowerPath(lowerPath)).isPassed())
         {
             manipulator.truncateUpperPath();
 
-            return false;
+            return result;
         }
+
+        lowerPathOrdinal = result.getValue();
 
         lowerPath.setUpperOrdinal(lowerPathOrdinal);
 
         dst.setLowerNode(src);
         dst.setLowerOrdinal(upperPathOrdinal);
 
-        return true;
+        return ManipulationResult.passed();
     }
 
-    public static <T extends Node<T>> boolean insertAndAppend(@Nonnull Path<T> dst,
-                                                              @Nonnull T src)
+    public static @Nonnull <T extends Node<T>> ManipulationResult insertAndAppend(@Nonnull Path<T> dst,
+                                                                                  @Nonnull T src)
     {
         return insertAndAppend(dst, src, false);
     }

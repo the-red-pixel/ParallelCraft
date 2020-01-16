@@ -10,6 +10,7 @@ import org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1.node.*;
 import org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1.StackComputation.Operator;
 import org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1.node.insn.*;
 import org.kucro3.parallelcraft.aopeng.asm.graph.manipulator.GraphNodeManipulator;
+import org.kucro3.parallelcraft.aopeng.asm.graph.manipulator.result.ManipulationResult;
 import org.kucro3.parallelcraft.aopeng.asm.graph.util.GraphHelper;
 import org.objectweb.asm.*;
 
@@ -450,8 +451,9 @@ public class SRFGv1Constructor extends MethodVisitor implements Opcodes {
                 finishBlock();
 
                 // link new block after the current block
-                if (!GraphHelper.append(currentBlockNode, operatingBlockNode))
-                    throw new IllegalStateException("SRFGraph block linkage failure");
+                ManipulationResult result;
+                if (!(result = GraphHelper.append(currentBlockNode, operatingBlockNode)).isPassed())
+                    throw new IllegalStateException("SRFGraph block linkage failure : " + result.requireMessage());
 
                 // transfer the construction process to the new block
                 currentBlockNode = operatingBlockNode;
@@ -1018,9 +1020,11 @@ public class SRFGv1Constructor extends MethodVisitor implements Opcodes {
         SRFStackElement firstElement = stackIterator.next();
         int mergence = firstElement.getSourceSRF();
 
+        ManipulationResult result;
+
         // link the first node if needed
-        if (node != null && !GraphHelper.push(firstElement.getUpperNode(), node))
-            throw new IllegalStateException("SRFGraph node linkage failure");
+        if (node != null && !(result = GraphHelper.push(firstElement.getUpperNode(), node)).isPassed())
+            throw new IllegalStateException("SRFGraph node linkage failure : " + result.requireMessage());
 
         if (count != 1) // no need to merge SRF if count = 1
         {
@@ -1032,8 +1036,8 @@ public class SRFGv1Constructor extends MethodVisitor implements Opcodes {
                 SRFStackElement stackElement = stackIterator.next();
 
                 // link node if needed
-                if (node != null && !GraphHelper.push(stackElement.getUpperNode(), node))
-                    throw new IllegalStateException("SRFGraph node linkage failure");
+                if (node != null && !(result = GraphHelper.push(stackElement.getUpperNode(), node)).isPassed())
+                    throw new IllegalStateException("SRFGraph node linkage failure : " + result.requireMessage());
 
                 // check SRF and merge if needed
                 int sourceSRF;
@@ -1188,8 +1192,9 @@ public class SRFGv1Constructor extends MethodVisitor implements Opcodes {
 //          }
 
             // insert the escape node to the top-stack path
-            if (!GraphHelper.insertAndPush(manipulator.getLowerPath(0) , new EscapeNode(target)))
-                throw new IllegalStateException("connective escape insertion failure");
+            ManipulationResult result;
+            if (!(result = GraphHelper.insertAndPush(manipulator.getLowerPath(0) , new EscapeNode(target))).isPassed())
+                throw new IllegalStateException("connective escape insertion failure : " + result.requireMessage());
         }
 
         private final SRFStackElement top;
