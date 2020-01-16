@@ -8,6 +8,7 @@ module parallelcraft.aopeng {
     exports org.kucro3.parallelcraft.aopeng.asm;
     exports org.kucro3.parallelcraft.aopeng.asm.graph;
     exports org.kucro3.parallelcraft.aopeng.asm.graph.manipulator;
+    exports org.kucro3.parallelcraft.aopeng.asm.graph.manipulator.result;
     exports org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1;
     exports org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1.node;
     exports org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1.node.insn;
