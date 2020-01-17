@@ -1,17 +1,17 @@
 package org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1;
 
+import com.theredpixelteam.redtea.util.Predication;
 import org.kucro3.parallelcraft.aopeng.util.Attachable;
 import org.kucro3.parallelcraft.aopeng.util.Attachment;
 import org.kucro3.parallelcraft.aopeng.util.AttachmentKey;
 import org.kucro3.parallelcraft.aopeng.util.TypeAttributedAttachmentKey;
 
 import javax.annotation.Nonnull;
-import java.util.Objects;
 
 public class StackComputationException extends RuntimeException implements Attachable {
     public StackComputationException(@Nonnull Cause cause)
     {
-        this.cause = Objects.requireNonNull(cause, "cause");
+        this.cause = Predication.requireNonNull(cause, "cause");
     }
 
     public static @Nonnull StackComputationException underflow()
@@ -103,8 +103,8 @@ public class StackComputationException extends RuntimeException implements Attac
             public TypeIncompatibility(@Nonnull StackElementType expected,
                                         @Nonnull StackElementType found)
             {
-                this.expected = Objects.requireNonNull(expected, "expected");
-                this.found = Objects.requireNonNull(found, "found");
+                this.expected = Predication.requireNonNull(expected, "expected");
+                this.found = Predication.requireNonNull(found, "found");
             }
 
             @Override

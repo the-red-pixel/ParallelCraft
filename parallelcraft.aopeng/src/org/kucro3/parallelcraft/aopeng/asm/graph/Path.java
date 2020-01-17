@@ -1,8 +1,9 @@
 package org.kucro3.parallelcraft.aopeng.asm.graph;
 
+import com.theredpixelteam.redtea.util.Predication;
+
 import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
-import java.util.Objects;
 
 public class Path<T extends Node> {
     public Path(@Nonnull T upperNode,
@@ -11,10 +12,10 @@ public class Path<T extends Node> {
                 @Nonnegative int lowerOrdinal,
                 boolean phantom)
     {
-        this.upperNode = Objects.requireNonNull(upperNode, "upperNode");
-        this.upperOrdinal = upperOrdinal;
-        this.lowerNode = Objects.requireNonNull(lowerNode, "lowerNode");
-        this.lowerOrdinal = lowerOrdinal;
+        this.upperNode = Predication.requireNonNull(upperNode, "upperNode");
+        this.upperOrdinal = Predication.requireNonNegative(upperOrdinal, "upperOrdinal");
+        this.lowerNode = Predication.requireNonNull(lowerNode, "lowerNode");
+        this.lowerOrdinal = Predication.requireNonNegative(lowerOrdinal, "lowerOrdinal");
         this.phantom = phantom;
     }
 
@@ -25,7 +26,7 @@ public class Path<T extends Node> {
 
     public void setLowerNode(@Nonnull T node)
     {
-        this.lowerNode = Objects.requireNonNull(node);
+        this.lowerNode = Predication.requireNonNull(node);
     }
 
     public @Nonnegative int getLowerOrdinal()
@@ -35,7 +36,7 @@ public class Path<T extends Node> {
 
     public void setLowerOrdinal(@Nonnegative int ordinal)
     {
-        this.lowerOrdinal = ordinal;
+        this.lowerOrdinal = Predication.requireNonNegative(ordinal);
     }
 
     public void incLowerOrdinal()
@@ -45,6 +46,9 @@ public class Path<T extends Node> {
 
     public void decLowerOrdinal()
     {
+        if (lowerOrdinal == 0)
+            throw new IllegalStateException("lower ordinal decreasing into negative");
+
         this.lowerOrdinal--;
     }
 
@@ -55,7 +59,7 @@ public class Path<T extends Node> {
 
     public void setUpperNode(@Nonnull T node)
     {
-        this.upperNode = Objects.requireNonNull(node);
+        this.upperNode = Predication.requireNonNull(node);
     }
 
     public @Nonnegative int getUpperOrdinal()
@@ -65,7 +69,7 @@ public class Path<T extends Node> {
 
     public void setUpperOrdinal(@Nonnegative int ordinal)
     {
-        this.upperOrdinal = ordinal;
+        this.upperOrdinal = Predication.requireNonNegative(ordinal);
     }
 
     public void incUpperOrdinal()
@@ -75,6 +79,9 @@ public class Path<T extends Node> {
 
     public void decUpperOrdinal()
     {
+        if (lowerOrdinal == 0)
+            throw new IllegalStateException("upper ordinal decreasing into negative");
+
         this.upperOrdinal--;
     }
 

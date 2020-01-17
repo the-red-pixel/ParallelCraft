@@ -1,5 +1,6 @@
 package org.kucro3.parallelcraft.aopeng.asm.graph.manipulator;
 
+import com.theredpixelteam.redtea.util.Predication;
 import org.kucro3.parallelcraft.aopeng.asm.graph.Node;
 import org.kucro3.parallelcraft.aopeng.asm.graph.Path;
 import org.kucro3.parallelcraft.aopeng.asm.graph.manipulator.result.IntManipulationResult;
@@ -17,11 +18,19 @@ import javax.annotation.Nonnull;
  * @param <T> 节点类型
  */
 public class LimitedGraphNodeManipulator<T extends Node<T>> extends AbstractGraphNodeManipulator<T> {
+    /**
+     * 构造函数。
+     *
+     * @param upperLimit 上路径最大数量
+     * @param lowerLimit 下路径最大数量
+     *
+     * @throws IllegalArgumentException 若 upperLimit、lowerLimit 存在负数则抛出此错误
+     */
     public LimitedGraphNodeManipulator(@Nonnegative int upperLimit,
                                        @Nonnegative int lowerLimit)
     {
-        this.upperLimit = upperLimit;
-        this.lowerLimit = lowerLimit;
+        this.upperLimit = Predication.requireNonNegative(upperLimit, "upperLimit");
+        this.lowerLimit = Predication.requireNonNegative(lowerLimit, "lowerLimit");
     }
 
     @Override

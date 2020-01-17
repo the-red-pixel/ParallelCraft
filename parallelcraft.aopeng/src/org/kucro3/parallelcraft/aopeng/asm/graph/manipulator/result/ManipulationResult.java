@@ -1,8 +1,9 @@
 package org.kucro3.parallelcraft.aopeng.asm.graph.manipulator.result;
 
+import com.theredpixelteam.redtea.util.Predication;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.Objects;
 
 /**
  * 用于表示图节点操作器的操作结果。
@@ -30,12 +31,14 @@ public class ManipulationResult {
      * 返回一个包含错误消息的“失败”的操作结果。
      *
      * @param message 错误消息
+     *
      * @return “失败”的操作结果
+     *
      * @throws NullPointerException 如果 message 为 null 则抛出此错误
      */
     public static @Nonnull ManipulationResult failed(@Nonnull String message)
     {
-        return new ManipulationResult(false, Objects.requireNonNull(message));
+        return new ManipulationResult(false, Predication.requireNonNull(message));
     }
 
     /**
@@ -62,6 +65,7 @@ public class ManipulationResult {
      * 返回此操作结果的错误消息，结果一定不为 null。
      *
      * @return 此操作结果的错误消息
+     *
      * @throws IllegalStateException 如果此操作结果不包含错误消息则抛出此错误
      */
     public @Nonnull String requireMessage()

@@ -1,5 +1,6 @@
 package org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1;
 
+import com.theredpixelteam.redtea.util.Predication;
 import org.kucro3.parallelcraft.aopeng.asm.graph.DifferentialVisitMeta;
 import org.kucro3.parallelcraft.aopeng.asm.graph.DifferentialVisitable;
 import org.kucro3.parallelcraft.aopeng.asm.graph.Node;
@@ -9,12 +10,11 @@ import org.kucro3.parallelcraft.aopeng.util.Attachable;
 import org.kucro3.parallelcraft.aopeng.util.Attachment;
 
 import javax.annotation.Nonnull;
-import java.util.Objects;
 
 public class SRFBlockNode implements Node<SRFBlockNode>, DifferentialVisitable, Attachable {
     public SRFBlockNode(@Nonnull SRFBlock flowBlock)
     {
-        this.flowBlock = Objects.requireNonNull(flowBlock);
+        this.flowBlock = Predication.requireNonNull(flowBlock);
         this.manipulator = new LowerLimitedGraphNodeManipulator<>(1);
     }
 
@@ -31,7 +31,7 @@ public class SRFBlockNode implements Node<SRFBlockNode>, DifferentialVisitable, 
 
     public void setFlowBlock(@Nonnull SRFBlock flowBlock)
     {
-        this.flowBlock = Objects.requireNonNull(flowBlock);
+        this.flowBlock = Predication.requireNonNull(flowBlock);
     }
 
     @Override

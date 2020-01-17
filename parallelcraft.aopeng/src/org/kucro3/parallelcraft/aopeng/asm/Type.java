@@ -1,5 +1,7 @@
 package org.kucro3.parallelcraft.aopeng.asm;
 
+import com.theredpixelteam.redtea.util.Predication;
+
 import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -23,7 +25,7 @@ public class Type {
 
     public void setDescriptor(@Nonnull String descriptor)
     {
-        this.descriptor = Objects.requireNonNull(descriptor);
+        this.descriptor = Predication.requireNonNull(descriptor);
 
         if (descriptor.isBlank())
             throw new IllegalArgumentException("empty descriptor");

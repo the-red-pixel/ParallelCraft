@@ -1,5 +1,6 @@
 package org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1;
 
+import com.theredpixelteam.redtea.util.Predication;
 import org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1.node.StackBlankNode;
 import org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1.node.StackRestoreNode;
 import org.kucro3.parallelcraft.aopeng.util.Attachable;
@@ -9,7 +10,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public class SRFBlock implements Attachable {
     public SRFBlock()
@@ -53,7 +53,7 @@ public class SRFBlock implements Attachable {
 
     public void setStackRestoration(@Nonnull StackRestoreNode stackRestoration)
     {
-        this.stackRestoration = Objects.requireNonNull(stackRestoration);
+        this.stackRestoration = Predication.requireNonNull(stackRestoration);
     }
 
     public @Nullable StackBlankNode getStackBlank()
@@ -68,7 +68,7 @@ public class SRFBlock implements Attachable {
 
     public void setStackBlank(@Nonnull StackBlankNode stackBlank)
     {
-        this.stackBlank = Objects.requireNonNull(stackBlank);
+        this.stackBlank = Predication.requireNonNull(stackBlank);
     }
 
     private StackRestoreNode stackRestoration;

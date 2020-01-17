@@ -1,5 +1,6 @@
 package org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1;
 
+import com.theredpixelteam.redtea.util.Predication;
 import org.kucro3.parallelcraft.aopeng.asm.graph.Node;
 import org.kucro3.parallelcraft.aopeng.asm.graph.DifferentialVisitMeta;
 import org.kucro3.parallelcraft.aopeng.asm.graph.Path;
@@ -28,7 +29,7 @@ import java.util.*;
 public class SRFGv1Assembler {
     public SRFGv1Assembler(@Nonnull SRFGv1 graph)
     {
-        this.graph = Objects.requireNonNull(graph, "graph");
+        this.graph = Predication.requireNonNull(graph, "graph");
     }
 
     public SRFGv1Assembler(@Nonnull SRFGv1 graph,
@@ -429,7 +430,7 @@ public class SRFGv1Assembler {
 
     public void setNodeContextPool(@Nonnull SRFNodeContextPool nodeContextPool)
     {
-        this.nodeContextPool = Objects.requireNonNull(nodeContextPool);
+        this.nodeContextPool = Predication.requireNonNull(nodeContextPool);
     }
 
     public @Nonnull SRFBlockContextPool getBlockContextPool()
@@ -439,7 +440,7 @@ public class SRFGv1Assembler {
 
     public void setBlockContextPool(@Nonnull SRFBlockContextPool blockContextPool)
     {
-        this.blockContextPool = Objects.requireNonNull(blockContextPool);
+        this.blockContextPool = Predication.requireNonNull(blockContextPool);
     }
 
     public void reset()
@@ -458,7 +459,7 @@ public class SRFGv1Assembler {
     {
         reset();
 
-        this.graph = Objects.requireNonNull(graph, "graph");
+        this.graph = Predication.requireNonNull(graph, "graph");
     }
 
     public void reset(@Nonnull SRFGv1 graph,
@@ -543,7 +544,7 @@ public class SRFGv1Assembler {
 
         public @Nonnull InsnList require(@Nonnegative int index)
         {
-            return Objects.requireNonNull(lists[index]);
+            return Predication.requireNonNull(lists[index]);
         }
 
         public void set(@Nonnegative int index, @Nullable InsnList insnList)
@@ -973,7 +974,7 @@ public class SRFGv1Assembler {
 
         public void setSubject(@Nonnull T subject)
         {
-            this.subject = Objects.requireNonNull(subject);
+            this.subject = Predication.requireNonNull(subject);
         }
 
         public @Nonnull T requireSubject()
@@ -1028,7 +1029,7 @@ public class SRFGv1Assembler {
     {
         public void setSourceInsnList(@Nonnull InsnList insnList)
         {
-            this.sourceInsnList = Objects.requireNonNull(insnList);
+            this.sourceInsnList = Predication.requireNonNull(insnList);
         }
 
         public @Nonnull InsnList requireSourceInsnList()
@@ -1053,7 +1054,7 @@ public class SRFGv1Assembler {
 
         public void setSourceDirection(@Nonnull Direction direction)
         {
-            this.sourceDirection = Objects.requireNonNull(direction);
+            this.sourceDirection = Predication.requireNonNull(direction);
         }
 
         public @Nonnull Direction requireSourceDirection()
@@ -1078,7 +1079,7 @@ public class SRFGv1Assembler {
 
         public void setSourcePath(@Nonnull Path<SRFNode> path)
         {
-            this.sourcePath = Objects.requireNonNull(path);
+            this.sourcePath = Predication.requireNonNull(path);
         }
 
         public @Nonnull Path<SRFNode> requireSourcePath()

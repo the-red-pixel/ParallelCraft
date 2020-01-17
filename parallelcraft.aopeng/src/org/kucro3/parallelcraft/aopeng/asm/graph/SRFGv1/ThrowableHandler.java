@@ -1,19 +1,20 @@
 package org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1;
 
+import com.theredpixelteam.redtea.util.Predication;
+
 import javax.annotation.Nonnull;
-import java.util.Objects;
 
 public class ThrowableHandler {
     public ThrowableHandler(@Nonnull String handlingType)
     {
-        setHandlingType(handlingType);
+        this.handlingType = Predication.requireNonNull(handlingType);
     }
 
     public ThrowableHandler(@Nonnull SRFBlockNode handler,
                             @Nonnull String handlingType)
     {
-        setHandler(handler);
-        setHandlingType(handlingType);
+        this.handler = Predication.requireNonNull(handler, "handler");
+        this.handlingType = Predication.requireNonNull(handlingType, "handlingType");
     }
 
     public @Nonnull SRFBlockNode getHandler()
@@ -44,12 +45,12 @@ public class ThrowableHandler {
 
     public void setHandler(@Nonnull SRFBlockNode handler)
     {
-        this.handler = Objects.requireNonNull(handler, "handler");
+        this.handler = Predication.requireNonNull(handler, "handler");
     }
 
     public void setHandlingType(@Nonnull String handlingType)
     {
-        this.handlingType = Objects.requireNonNull(handlingType, "handlingType");
+        this.handlingType = Predication.requireNonNull(handlingType, "handlingType");
     }
 
     private SRFBlockNode handler;

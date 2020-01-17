@@ -1,14 +1,15 @@
 package org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1;
 
+import com.theredpixelteam.redtea.util.Predication;
+
 import javax.annotation.Nonnull;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.Objects;
 
 public class ThrowableHandlers implements Iterable<ThrowableHandler> {
     public void pushFirst(@Nonnull ThrowableHandler handler)
     {
-        handlers.addFirst(Objects.requireNonNull(handler));
+        handlers.addFirst(Predication.requireNonNull(handler));
     }
 
     public boolean popFirst()
@@ -18,7 +19,7 @@ public class ThrowableHandlers implements Iterable<ThrowableHandler> {
 
     public void pushTail(@Nonnull ThrowableHandler handler)
     {
-        handlers.addLast(Objects.requireNonNull(handler));
+        handlers.addLast(Predication.requireNonNull(handler));
     }
 
     public boolean popTail()

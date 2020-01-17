@@ -1,5 +1,6 @@
 package org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1;
 
+import com.theredpixelteam.redtea.util.Predication;
 import org.kucro3.parallelcraft.aopeng.asm.graph.DifferentialVisitMeta;
 import org.kucro3.parallelcraft.aopeng.asm.graph.DifferentialVisitable;
 import org.kucro3.parallelcraft.aopeng.asm.graph.Node;
@@ -9,7 +10,6 @@ import org.kucro3.parallelcraft.aopeng.util.Attachment;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.Objects;
 
 // Stack Related Flow SRFGraph
 public abstract class SRFNode implements Node<SRFNode>, DifferentialVisitable, Attachable {
@@ -17,8 +17,8 @@ public abstract class SRFNode implements Node<SRFNode>, DifferentialVisitable, A
                       @Nonnull GraphNodeManipulator<SRFNode> manipulator,
                       boolean bypass)
     {
-        this.type = Objects.requireNonNull(type, "type");
-        this.manipulator = Objects.requireNonNull(manipulator, "manipulator");
+        this.type = Predication.requireNonNull(type, "type");
+        this.manipulator = Predication.requireNonNull(manipulator, "manipulator");
         this.bypass = bypass;
     }
 

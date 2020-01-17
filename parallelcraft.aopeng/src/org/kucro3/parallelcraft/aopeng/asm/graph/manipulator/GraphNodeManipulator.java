@@ -47,7 +47,9 @@ public interface GraphNodeManipulator<T extends Node<T>> {
      * 返回指定序号的上路径。
      *
      * @param index 指定序号
+     *
      * @return 指定序号的上路径
+     *
      * @throws IndexOutOfBoundsException 如果不存在指定序号的上路径则会抛出此错误
      */
     public default @Nonnull Path<T> getUpperPath(int index)
@@ -59,6 +61,7 @@ public interface GraphNodeManipulator<T extends Node<T>> {
      * 返回已连接的序号最小（即 0）的上路径。
      *
      * @return 序号最小的上路径
+     *
      * @throws IndexOutOfBoundsException 如果不存在任何已连接的上路径则会抛出此错误
      */
     public default @Nonnull Path<T> peekUpperPath()
@@ -70,6 +73,7 @@ public interface GraphNodeManipulator<T extends Node<T>> {
      * 返回已连接的序号最小（即 0）的上节点。
      *
      * @return 序号最小的上节点
+     *
      * @throws IndexOutOfBoundsException 如果不存在任何已连接的上节点则会抛出此错误
      */
     public default @Nonnull T peekUpperNode()
@@ -128,7 +132,9 @@ public interface GraphNodeManipulator<T extends Node<T>> {
      * 返回指定序号的下路径。
      *
      * @param index 指定序号
+     *
      * @return 指定序号的下路径
+     *
      * @throws IndexOutOfBoundsException 如果不存在指定序号的下路径则抛出此错误
      */
     public default @Nonnull Path<T> getLowerPath(int index)
@@ -140,6 +146,7 @@ public interface GraphNodeManipulator<T extends Node<T>> {
      * 返回已连接的序号最小（即 0）的下路径。
      *
      * @return 序号最小的下路径
+     *
      * @throws IndexOutOfBoundsException 如果不存在已连接的下路径则抛出此错误
      */
     public default @Nonnull Path<T> peekLowerPath()
@@ -151,6 +158,7 @@ public interface GraphNodeManipulator<T extends Node<T>> {
      * 返回已连接的序号最小（即 0）的下节点。
      *
      * @return 序号最小的下节点
+     *
      * @throws IndexOutOfBoundsException 如果不存在已连接的下节点则抛出此错误
      */
     public default @Nonnull T peekLowerNode()
@@ -184,6 +192,7 @@ public interface GraphNodeManipulator<T extends Node<T>> {
      * 若执行，此操作会更改已连接的路径对象内记录的内容。
      *
      * @return 操作结果
+     *
      * @throws IllegalStateException 若在修改路径连接关系时出错则会抛出此错误
      */
     public @Nonnull ManipulationResult unlink();
@@ -196,7 +205,9 @@ public interface GraphNodeManipulator<T extends Node<T>> {
      *
      * @param ordinal 指定序号
      * @param path 指定上路径
+     *
      * @return 操作结果
+     *
      * @throws IndexOutOfBoundsException 如果指定序号大于已连接上路径的数量则会抛出此错误
      * @throws IllegalArgumentException 如果指定序号小于 0 则会抛出此错误
      * @throws NullPointerException 如果 path 为 null 则抛出此错误
@@ -209,7 +220,9 @@ public interface GraphNodeManipulator<T extends Node<T>> {
      * 对上路径对象 path 内记录的内容的相应修改操作应在此方法以外完成。
      *
      * @param path 指定上路径
+     *
      * @return 操作结果
+     *
      * @throws NullPointerException 如果 path 为 null 则抛出此错误
      */
     // add the path to the head
@@ -231,7 +244,9 @@ public interface GraphNodeManipulator<T extends Node<T>> {
      * 对上路径对象 path 内记录的内容的相应修改操作应在此方法以外完成。
      *
      * @param path 指定上路径
+     *
      * @return 操作结果，操作成功时结果内数值为指定上路径对象 path 加入后的序号，否则为 -1
+     *
      * @throws NullPointerException 如果 path 为 null 则抛出此错误
      */
     // add the path to the tail
@@ -242,6 +257,7 @@ public interface GraphNodeManipulator<T extends Node<T>> {
      * 此操作不会更改被移除的上路径内记录的内容。
      *
      * @return 被移除的上路径
+     *
      * @throws java.util.NoSuchElementException 如果不存在任何已连接的上路径则抛出此错误
      */
     // remove the last path
@@ -261,7 +277,9 @@ public interface GraphNodeManipulator<T extends Node<T>> {
      *
      * @param ordinal 指定序号
      * @param path 指定下路径
+     *
      * @return 操作结果
+     *
      * @throws IndexOutOfBoundsException 如果指定序号大于已连接下路径的数量则会抛出此错误
      * @throws IllegalArgumentException 如果指定序号小于 0 则会抛出此错误
      * @throws NullPointerException 如果 path 为 null 则抛出此错误
@@ -274,7 +292,9 @@ public interface GraphNodeManipulator<T extends Node<T>> {
      * 对下路径对象 path 内记录的内容的相应修改操作应在此方法以外完成。
      *
      * @param path 指定下路径
+     *
      * @return 操作结果
+     *
      * @throws NullPointerException 如果 path 为 null 则抛出此错误
      */
     // add the path to the head
@@ -285,6 +305,7 @@ public interface GraphNodeManipulator<T extends Node<T>> {
      * 此操作会更改已连接的下路径对象内记录的序号，但不会更改被移除的下路径内记录的内容。
      *
      * @return 被移除的下路径
+     *
      * @throws java.util.NoSuchElementException 如果不存在任何已连接的下路径则抛出此错误
      */
     // remove the first path
@@ -296,7 +317,9 @@ public interface GraphNodeManipulator<T extends Node<T>> {
      * 对下路径对象 path 内记录的内容的相应修改操作应在此方法以外完成。
      *
      * @param path 指定下路径
+     *
      * @return 操作结果，操作成功时结果内数值为指定下路径对象 path 加入后的序号，否则为 -1
+     *
      * @throws NullPointerException 如果 path 为 null 则抛出此错误
      */
     // add the path to the tail
@@ -307,6 +330,7 @@ public interface GraphNodeManipulator<T extends Node<T>> {
      * 此操作不会更改被移除的下路径内记录的内容。
      *
      * @return 被移除的下路径
+     *
      * @throws java.util.NoSuchElementException 如果不存在任何已连接的下路径则抛出此错误
      */
     // remove the last path

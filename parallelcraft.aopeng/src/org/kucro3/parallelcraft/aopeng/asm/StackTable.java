@@ -1,9 +1,10 @@
 package org.kucro3.parallelcraft.aopeng.asm;
 
+import com.theredpixelteam.redtea.util.Predication;
+
 import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
 import java.util.Arrays;
-import java.util.Objects;
 
 // copy on write
 public class StackTable {
@@ -143,7 +144,7 @@ public class StackTable {
                             @Nonnull Type type)
         {
             this.index = index;
-            this.type = Objects.requireNonNull(type);
+            this.type = Predication.requireNonNull(type);
         }
 
         public @Nonnull Type getType()

@@ -1,8 +1,9 @@
 package org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1;
 
+import com.theredpixelteam.redtea.util.Predication;
+
 import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
-import java.util.Objects;
 
 public class SRFStackElement implements StackComputation.Computational {
     public SRFStackElement(@Nonnegative int sourceSRF,
@@ -10,8 +11,8 @@ public class SRFStackElement implements StackComputation.Computational {
                            @Nonnull StackElementType type)
     {
         this.sourceSRF = sourceSRF;
-        this.upperNode = Objects.requireNonNull(upperNode, "sourceNode");
-        this.type = Objects.requireNonNull(type, "type");
+        this.upperNode = Predication.requireNonNull(upperNode, "sourceNode");
+        this.type = Predication.requireNonNull(type, "type");
     }
 
     public @Nonnull SRFNode getUpperNode()
@@ -36,7 +37,7 @@ public class SRFStackElement implements StackComputation.Computational {
 
     public void setType(@Nonnull StackElementType type)
     {
-        this.type = Objects.requireNonNull(type);
+        this.type = Predication.requireNonNull(type);
     }
 
     @Override

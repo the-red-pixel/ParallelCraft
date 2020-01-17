@@ -1,7 +1,8 @@
 package org.kucro3.parallelcraft.aopeng.asm.graph.manipulator.result;
 
+import com.theredpixelteam.redtea.util.Predication;
+
 import javax.annotation.Nonnull;
-import java.util.Objects;
 
 /**
  * 包含一个整数结果的图节点操作器的操作结果。<br>
@@ -26,6 +27,7 @@ public class IntManipulationResult extends ManipulationResult {
      * 返回一个包含整数结果的“通过”的操作结果。
      *
      * @param value 整数结果
+     *
      * @return “通过”的操作结果
      */
     public static @Nonnull IntManipulationResult passed(int value)
@@ -43,13 +45,15 @@ public class IntManipulationResult extends ManipulationResult {
      *
      * @param message 错误消息
      * @param value 整数结果
+     *
      * @return “失败”的操作结果
+     *
      * @throws NullPointerException 如果 message 为 null 则抛出此错误
      */
     public static @Nonnull IntManipulationResult failed(@Nonnull String message,
                                                         int value)
     {
-        return new IntManipulationResult(false, Objects.requireNonNull(message), value);
+        return new IntManipulationResult(false, Predication.requireNonNull(message), value);
     }
 
     /**

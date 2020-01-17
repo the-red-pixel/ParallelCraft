@@ -1,6 +1,7 @@
 package org.kucro3.parallelcraft.aopeng.asm.graph.SRFGv1;
 
 import com.theredpixelteam.redtea.util.Pair;
+import com.theredpixelteam.redtea.util.Predication;
 import com.theredpixelteam.redtea.util.ShouldNotReachHere;
 import com.theredpixelteam.redtea.util.Vector3;
 import org.kucro3.parallelcraft.aopeng.asm.DifferentialBlockTable;
@@ -44,7 +45,7 @@ public class SRFGv1Constructor extends MethodVisitor implements Opcodes {
     {
         super(api, mv);
 
-        Objects.requireNonNull(blockTable, "blockTable");
+        Predication.requireNonNull(blockTable, "blockTable");
 
         this.firstBlockNode = this.currentBlockNode =
                 new SRFBlockNode(new SRFBlock());
@@ -1083,7 +1084,7 @@ public class SRFGv1Constructor extends MethodVisitor implements Opcodes {
                                                                       Operator operator,
                                                                       StackElementType found)
     {
-        return stackTypeIncompatibility(source, Objects.requireNonNull(StackElementType.from(operator),
+        return stackTypeIncompatibility(source, Predication.requireNonNull(StackElementType.from(operator),
                 "Illegal computation operator on stack"), found);
     }
 
