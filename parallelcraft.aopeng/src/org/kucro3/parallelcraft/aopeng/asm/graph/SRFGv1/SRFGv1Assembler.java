@@ -25,21 +25,43 @@ import javax.annotation.Nullable;
 import javax.annotation.concurrent.NotThreadSafe;
 import java.util.*;
 
+/**
+ * SRFG-v1 图汇编器。<br>
+ *
+ * 本实例可以将某一个 SRFG-v1 图还原为字节码序列。
+ */
 @NotThreadSafe
 public class SRFGv1Assembler {
+    /**
+     * 构造函数。
+     *
+     * @param graph 要还原的图
+     *
+     * @throws NullPointerException 若 graph 为 null 则抛出此错误
+     */
     public SRFGv1Assembler(@Nonnull SRFGv1 graph)
     {
-        this.graph = Predication.requireNonNull(graph, "graph");
+        this.graph = Predication.requireNonNull(graph);
     }
 
+    /**
+     * 构造函数。<br>
+     * 对象池被用于实现尾递归，在非多线程环境下，多个 SRFG-v1 图汇编器可共用同一个对象池以提高性能。
+     *
+     * @param graph 要还原的图
+     * @param nodeContextPool 节点上下文对象池
+     * @param blockContextPool 块上下文对象池
+     *
+     * @throws NullPointerException 若 graph、nodeContextPool、blockContextPool 中存在 null 则抛出此错误
+     */
     public SRFGv1Assembler(@Nonnull SRFGv1 graph,
                            @Nonnull SRFNodeContextPool nodeContextPool,
                            @Nonnull SRFBlockContextPool blockContextPool)
     {
-        this(graph);
+        this.graph = Predication.requireNonNull(graph, "graph");
 
-        setNodeContextPool(nodeContextPool);
-        setBlockContextPool(blockContextPool);
+        this.nodeContextPool = Predication.requireNonNull(nodeContextPool, "nodeContextPool");
+        this.blockContextPool = Predication.requireNonNull(blockContextPool, "blockContextPool");
     }
 
     // *Note: Tail recursion is used in this process. Though using normal recursion
@@ -52,6 +74,18 @@ public class SRFGv1Assembler {
     //        with different assemblers, but not concurrently.
     //
     //        *Stack frames are not computed by this assembler*
+    /**
+     * 将图还原为字节码序列，结果将体现在 MethodVisitor。<br>
+     * <b>** 注意：此汇编器不会计算堆栈大小及栈帧（Stack Frame）并且不会严格检查图的合法性 **</b>
+     *
+     * @param mv 接受结果的对象
+     *
+     * @throws NullPointerException 若 mv 为 null 则抛出此错误
+     *
+     * @throws ConcurrentModificationException 若多个汇编器同时访问同一个图可能会抛出此错误
+     *
+     * @throws IllegalStateException 若图结构存在问题则可能会抛出此错误
+     */
     public void accept(@Nonnull MethodVisitor mv)
     {
         mv.visitCode();
@@ -80,7 +114,7 @@ public class SRFGv1Assembler {
                 case 0: // visit stage
                     if (!visitMeta.visited(blockNode))
                     {
-                        List<SRF> srfs = blockNode.getFlowBlock().getSRFs();
+                        List<SRF> srfs = blockNode.getBlock().getSRFs();
 
                         if (srfs.isEmpty())
                             blockContextPool.release(); // exit if the block is empty
@@ -153,7 +187,7 @@ public class SRFGv1Assembler {
                     blockInsnList.accept(mv);
 
                     // process throwable handlers
-                    for (ThrowableHandler handler : blockNode.getFlowBlock().getThrowableHandlers())
+                    for (ThrowableHandler handler : blockNode.getBlock().getThrowableHandlers())
                         mv.visitTryCatchBlock(
                                 startLabel.getLabel(),
                                 endLabel.getLabel(),
@@ -412,37 +446,73 @@ public class SRFGv1Assembler {
         mv.visitEnd();
     }
 
+    /**
+     * 返回此汇编器的目标图的节点访问信息。
+     *
+     * @return 目标图的节点访问信息
+     */
     public @Nonnull DifferentialVisitMeta getVisitMeta()
     {
         return graph.getVisitMeta();
     }
 
-    public @Nonnull
-    SRFGv1 getGraph()
+    /**
+     * 返回此汇编器的目标图。
+     *
+     * @return 目标图
+     */
+    public @Nonnull SRFGv1 getGraph()
     {
         return graph;
     }
 
+    /**
+     * 返回此汇编器的节点上下文对象池。
+     *
+     * @return 节点上下文对象池
+     */
     public @Nonnull SRFNodeContextPool getNodeContextPool()
     {
         return nodeContextPool == null ? nodeContextPool = new SRFNodeContextPool() : nodeContextPool;
     }
 
+    /**
+     * 设定此汇编器的节点上下文对象池。
+     *
+     * @param nodeContextPool 节点上下文对象池
+     *
+     * @throws NullPointerException 若 nodeContextPool 为 null 则抛出此错误
+     */
     public void setNodeContextPool(@Nonnull SRFNodeContextPool nodeContextPool)
     {
         this.nodeContextPool = Predication.requireNonNull(nodeContextPool);
     }
 
+    /**
+     * 返回此汇编器的块上下文对象池。
+     *
+     * @return 块上下文对象池
+     */
     public @Nonnull SRFBlockContextPool getBlockContextPool()
     {
         return blockContextPool == null ? blockContextPool = new SRFBlockContextPool() : blockContextPool;
     }
 
+    /**
+     * 设定此汇编器的块上下文对象池。
+     *
+     * @param blockContextPool 块上下文对象池
+     *
+     * @throws NullPointerException 若 blockContextPool 为 null 则抛出此错误
+     */
     public void setBlockContextPool(@Nonnull SRFBlockContextPool blockContextPool)
     {
         this.blockContextPool = Predication.requireNonNull(blockContextPool);
     }
 
+    /**
+     * 重置此汇编器。
+     */
     public void reset()
     {
         nodeContextPool.reset();
@@ -455,6 +525,13 @@ public class SRFGv1Assembler {
         blockContextAttachmentKey = TypeAttributedAttachmentKey.create(SRFBlockContext.class);
     }
 
+    /**
+     * 重置此汇编器。
+     *
+     * @param graph 新的目标图
+     *
+     * @throws NullPointerException 若 graph 为 null 则抛出此错误
+     */
     public void reset(@Nonnull SRFGv1 graph)
     {
         reset();
@@ -462,6 +539,15 @@ public class SRFGv1Assembler {
         this.graph = Predication.requireNonNull(graph, "graph");
     }
 
+    /**
+     * 重置此汇编器。
+     *
+     * @param graph 新的目标图
+     * @param nodeContextPool 新的节点上下文对象池
+     * @param blockContextPool 新的块上下文对象池
+     *
+     * @throws NullPointerException 若 graph、nodeContextPool、blockContextPool 中存在 null 则抛出此错误
+     */
     public void reset(@Nonnull SRFGv1 graph,
                       @Nonnull SRFNodeContextPool nodeContextPool,
                       @Nonnull SRFBlockContextPool blockContextPool)

@@ -8,7 +8,17 @@ import org.kucro3.parallelcraft.aopeng.asm.graph.manipulator.LimitedGraphNodeMan
 
 import javax.annotation.Nonnull;
 
+/**
+ * 逃逸节点。
+ */
 public class EscapeNode extends SRFNode {
+    /**
+     * 构造函数。
+     *
+     * @param target 目标栈相关流
+     *
+     * @throws NullPointerException 若 target 为 null 则抛出此错误
+     */
     public EscapeNode(@Nonnull SRF target)
     {
         super(SRFGv1NodeTypes.ESCAPE, new LimitedGraphNodeManipulator<>(1, 1), true);
@@ -16,10 +26,27 @@ public class EscapeNode extends SRFNode {
         this.target = Predication.requireNonNull(target);
     }
 
-    public SRF getTarget()
+    /**
+     * 返回目标栈相关流。
+     *
+     * @return 目标栈相关流
+     */
+    public @Nonnull SRF getTarget()
     {
         return target;
     }
 
-    private final SRF target;
+    /**
+     * 设定目标栈相关流。
+     *
+     * @param target 目标栈相关流
+     *
+     * @throws NullPointerException 若 target 为 null 则抛出此错误
+     */
+    public void setTarget(@Nonnull SRF target)
+    {
+        this.target = Predication.requireNonNull(target);
+    }
+
+    private SRF target;
 }

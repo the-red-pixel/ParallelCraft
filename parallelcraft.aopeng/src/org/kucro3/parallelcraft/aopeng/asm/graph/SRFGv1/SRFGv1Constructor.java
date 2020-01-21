@@ -20,25 +20,62 @@ import javax.annotation.Nullable;
 import javax.annotation.concurrent.NotThreadSafe;
 import java.util.*;
 
+/**
+ * SRFG-v1 图构造器。<br>
+ *
+ * 本实例可以将字节码序列转换为 SRFG-v1 图。
+ */
 @NotThreadSafe
 public class SRFGv1Constructor extends MethodVisitor implements Opcodes {
+    /**
+     * 构造函数。
+     *
+     * @param blockTable 分块表
+     *
+     * @throws NullPointerException 若 blockTable 为 null 则抛出此错误
+     */
     public SRFGv1Constructor(@Nonnull DifferentialBlockTable blockTable)
     {
         this(blockTable, ASM7);
     }
 
+    /**
+     * 构造函数。
+     *
+     * @param blockTable 分块表
+     * @param mv 下级 visitor
+     *
+     * @throws NullPointerException 若 blockTable 为 null 则抛出此错误
+     */
     public SRFGv1Constructor(@Nonnull DifferentialBlockTable blockTable,
                              @Nullable MethodVisitor mv)
     {
         this(blockTable, ASM7, mv);
     }
 
+    /**
+     * 构造函数。
+     *
+     * @param blockTable 分块表
+     * @param api ObjectWeb ASM 版本
+     *
+     * @throws NullPointerException 若 blockTable 为 null 则抛出此错误
+     */
     protected SRFGv1Constructor(@Nonnull DifferentialBlockTable blockTable,
                                 int api)
     {
         this(blockTable, api, null);
     }
 
+    /**
+     * 构造函数。
+     *
+     * @param blockTable 分块表
+     * @param api ObjectWeb ASM 版本
+     * @param mv 下级 visitor
+     *
+     * @throws NullPointerException 若 blockTable 为 null 则抛出此错误
+     */
     protected SRFGv1Constructor(@Nonnull DifferentialBlockTable blockTable,
                                 int api,
                                 @Nullable MethodVisitor mv)
@@ -354,13 +391,13 @@ public class SRFGv1Constructor extends MethodVisitor implements Opcodes {
             {
                 declareBlock(label, operatingBlockNode = currentBlockNode);
 
-                operatingBlock = currentBlockNode.getFlowBlock();
+                operatingBlock = currentBlockNode.getBlock();
             }
             else
             {
                 operatingBlockNode = acquireBlock(label);
 
-                operatingBlock = operatingBlockNode.getFlowBlock();
+                operatingBlock = operatingBlockNode.getBlock();
             }
 
             List<ThrowableHandler> newHandlers = null;
@@ -489,8 +526,12 @@ public class SRFGv1Constructor extends MethodVisitor implements Opcodes {
         return labelBlockMap.computeIfAbsent(label, (unused) -> new SRFBlockNode(new SRFBlock()));
     }
 
-    public @Nonnull
-    SRFGv1 construct()
+    /**
+     * 构造 SRFG-v1 图对象。
+     *
+     * @return 图对象
+     */
+    public @Nonnull SRFGv1 construct()
     {
         finishBlock();
 
@@ -499,7 +540,7 @@ public class SRFGv1Constructor extends MethodVisitor implements Opcodes {
 
     private void finishBlock()
     {
-        SRFBlock currentBlock = currentBlockNode.getFlowBlock();
+        SRFBlock currentBlock = currentBlockNode.getBlock();
 
         // check stack, append stack blank node if not empty
         if (!stack.isEmpty())
@@ -508,7 +549,7 @@ public class SRFGv1Constructor extends MethodVisitor implements Opcodes {
 
             consumeStack(stack.size(), stackBlank);
 
-            currentBlockNode.getFlowBlock().setStackBlank(stackBlank);
+            currentBlockNode.getBlock().setStackBlank(stackBlank);
         }
 
         // add all roots not merged into the block
@@ -533,6 +574,11 @@ public class SRFGv1Constructor extends MethodVisitor implements Opcodes {
         currentRestorationSRF = -1;
     }
 
+    /**
+     * 返回上一个生成的节点。
+     *
+     * @return 上一个生成的节点。
+     */
     public @Nullable SRFNode getLastNode()
     {
         return lastNode;
@@ -929,7 +975,7 @@ public class SRFGv1Constructor extends MethodVisitor implements Opcodes {
 
         // stack restoration
 
-        SRFBlock currentBlock = currentBlockNode.getFlowBlock();
+        SRFBlock currentBlock = currentBlockNode.getBlock();
 
         StackRestoreNode stackRestore;
         boolean establish;

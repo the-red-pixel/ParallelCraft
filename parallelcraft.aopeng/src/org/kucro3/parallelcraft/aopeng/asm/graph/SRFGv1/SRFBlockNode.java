@@ -11,7 +11,19 @@ import org.kucro3.parallelcraft.aopeng.util.Attachment;
 
 import javax.annotation.Nonnull;
 
+/**
+ * 栈相关流块节点。<br>
+ *
+ * 本实例作为栈相关流块的容器以及栈相关流图的构成部分。
+ */
 public class SRFBlockNode implements Node<SRFBlockNode>, DifferentialVisitable, Attachable {
+    /**
+     * 构造函数。
+     *
+     * @param flowBlock 栈相关流块
+     *
+     * @throws NullPointerException 若 flowBlock 为 null 则抛出此错误
+     */
     public SRFBlockNode(@Nonnull SRFBlock flowBlock)
     {
         this.flowBlock = Predication.requireNonNull(flowBlock);
@@ -24,12 +36,24 @@ public class SRFBlockNode implements Node<SRFBlockNode>, DifferentialVisitable, 
         return manipulator;
     }
 
-    public @Nonnull SRFBlock getFlowBlock()
+    /**
+     * 返回栈相关流块。
+     *
+     * @return 栈相关流块
+     */
+    public @Nonnull SRFBlock getBlock()
     {
         return flowBlock;
     }
 
-    public void setFlowBlock(@Nonnull SRFBlock flowBlock)
+    /**
+     * 设定栈相关流块。
+     *
+     * @param flowBlock 栈相关流块
+     *
+     * @throws NullPointerException 若 flowBlock 为 null 则抛出此错误
+     */
+    public void setBlock(@Nonnull SRFBlock flowBlock)
     {
         this.flowBlock = Predication.requireNonNull(flowBlock);
     }
