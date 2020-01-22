@@ -1,6 +1,6 @@
 # SRFG-v1
 > Stack Related Flow Graph (Revision 1)  
-> 栈相关控制流图（第一修订版）  
+> 栈相关流图（第一修订版）  
 
 **（阅读此文档前，请确定您已知晓 Java 字节码相关的基础知识）**
 
