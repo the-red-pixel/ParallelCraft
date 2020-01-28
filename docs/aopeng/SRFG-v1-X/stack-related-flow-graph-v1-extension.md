@@ -70,7 +70,7 @@ Array     | [      |  1  | 数组引用    |
 ### <a id = "2-3">2.3&nbsp;严格模型</a>
 &emsp;&emsp;严格模型的类型系统基于第 [2.1](#2-1) 节中所描述的分类方式，并对对象与数组对象的转换、继承关系进行严格计算。此种类型模型较为复杂，运行时开销较大，并且需要预先提供具体类型的继承关系，但可以达到更好的多态化效果，支持更多的多态化特性。  
 &emsp;&emsp;Java 语言规范允许类型继承，允许实现多个接口，但不允许多重类型继承。由于继承与接口的存在，某种类型可能可以被认作多种其它类型，或与多种其它类型向兼容，在严格模型下，此种类型就不能简单的被看作只有一种单一的身份，不能被笼统地概括为“对象”。这就需要额外的计算，并且不允许出现未知的继承关系，但此时类型之间的关系就会十分明确。  
-&emsp;&emsp;需要注意的是，存在继承关系的类型就会有多个身份，但这些身份的存在并不是并列的。观察以下类型：
+&emsp;&emsp;需要注意的是，存在继承关系的类型就会有多个身份，且这些身份的存在不全是并列的。观察以下类型：
 ```Java
 public final class Integer extends Number
         implements Comparable<Integer>, Constable, ConstantDesc {
@@ -93,7 +93,85 @@ public final class Integer extends Number
  | Integer |<------+--------------+--------------+
  +---------+ implements
 ```
-&emsp;&emsp;观察此继承树可得，类型的不同身份实际上存在一定的层次区别。并且一般地，类型的继承树遵循自顶向下的原则，即越靠近顶端的类型越抽象，越靠近底端的类型越具象，这也是类型继承的核心理念。  
+&emsp;&emsp;观察此继承树可知，类型的不同身份实际上存在一定的层次区别。并且一般地，类型的继承树遵循自顶向下的原则，即越靠近顶端的类型越抽象，越靠近底端的类型越具象，这也是类型继承的核心理念。而 Java 中接口（Interface）的存在也使得类型的继承树中可能出现不同身份并列的情况，使得我们不得不考虑**多重继承**可能带来的副作用。  
+&emsp;&emsp;本模型规定在此情况下，其不同身份的优先级如下（数字编号越小优先级越高，前缀为 ```#``` 表示实现接口，```@``` 表示继承，无前缀表示本类型自身）：
+```
+#0   java.lang.Integer
+#1 # java.lang.Comparable
+#1 # java.lang.constant.Constable
+#1 # java.lang.constant.ConstantDesc
+#2 @ java.lang.Number
+#3 @ java.lang.Object
+```
+&emsp;&emsp;可知，```Integer``` 类型实现的三个接口类型（```Comparable```、```Constable```、```ConstantDesc```）而拥有的三个身份是并列关系。这种现象会为实现多态化特性的过程带来副作用，比如存在二义性等，并且这些问题在 Java 语言本身中就已有体现，如下例：
+```Java
+public static interface B {
+    public default void foo()
+    {
+        // ...
+    }
+}
+
+public static interface C {
+    public default void foo()
+    {
+        // ...
+    }
+}
+```
+&emsp;&emsp;首先，定义两个接口类型 ```B``` 与 ```C```，并且都含有名称为 ```foo``` 的无返回值缺省函数。
+```Java
+public class A implements B, C {
+    // ...
+}
+```
+&emsp;&emsp;其次，定义一个类型 ```A```，并实现接口类型 ```B``` 与 ```C```，且不重写 ```void foo()``` 函数。此时编译类型 ```A``` 则会得到类似以下的错误信息：
+```
+Error: java: 类型 B 和 C 不兼容;
+        类 A 从类型 B 和 C 中继承了foo() 的不相关默认值
+```
+&emsp;&emsp;此种多重继承的情况明显带来了二义性，所以 Java 语言规范不会允许此种情况存在。解决方案即是在类 ```A``` 中重写 ```void foo()``` 函数以消除二义性，如下：
+```Java
+public class A implements B, C {
+    @Override
+    public void foo()
+    {
+        // B.super.foo();
+        // C.super.foo();
+        // ...
+    }
+
+    // ...
+}
+```
+&emsp;&emsp;多重继承亦会带来类型冲突的问题，如下例：
+```Java
+public static interface B {
+    public default void foo()
+    {
+        // ...
+    }
+}
+
+public static interface C {
+    public default int foo()
+    {
+        // ...
+    }
+}
+```
+&emsp;&emsp;同样地，首先定义两个接口类型 ```B``` 与 ```C``` 并包含同名函数 ```foo()```。此时，将类 ```C``` 内的 ```foo()``` 函数的返回值更改为 ```int```。
+```Java
+public class A implements B, C {
+    // ...
+}
+```
+&emsp;&emsp;其次，定义一个类型 ```A```，并实现接口类型 ```B``` 与 ```C```。此时编译类型 ```A``` 则会得到类似以下的错误信息：
+```
+Error: java: 类型 B 和 C 不兼容;
+        两者都定义了 foo(), 但却带有不相关的返回类型
+```
+&emsp;&emsp;此种错误无法用重载 ```foo()``` 函数的方法解决，且解决方案只有不同时实现接口类型 ```B``` 与 ```C```。
 
 // TODO  
   
