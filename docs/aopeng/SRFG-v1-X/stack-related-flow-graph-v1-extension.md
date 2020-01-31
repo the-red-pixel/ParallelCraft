@@ -11,6 +11,8 @@
     - [2.1 基本类型](#2-1)
     - [2.2 松散模型](#2-2)
     - [2.3 严格模型](#2-3)
+        - [2.3.1 多重继承](#2-3-1)
+        - [2.3.2 类型匹配](#2-3-2)
 - [3 图结构](#3)
     - [3.1 蕴含性](#3-1)
     - [3.2 基本表示](#3-2)
@@ -69,7 +71,8 @@ Array     | [      |  1  | 数组引用    |
 
 ### <a id = "2-3">2.3&nbsp;严格模型</a>
 &emsp;&emsp;严格模型的类型系统基于第 [2.1](#2-1) 节中所描述的分类方式，并对对象与数组对象的转换、继承关系进行严格计算。此种类型模型较为复杂，运行时开销较大，并且需要预先提供具体类型的继承关系，但可以达到更好的多态化效果，支持更多的多态化特性。  
-&emsp;&emsp;Java 语言规范允许类型继承，允许实现多个接口，但不允许多重类型继承。由于继承与接口的存在，某种类型可能可以被认作多种其它类型，或与多种其它类型向兼容，在严格模型下，此种类型就不能简单的被看作只有一种单一的身份，不能被笼统地概括为“对象”。这就需要额外的计算，并且不允许出现未知的继承关系，但此时类型之间的关系就会十分明确。  
+&emsp;&emsp;Java 语言规范允许类型继承，不允许多重类型继承，但允许实现、重载多个接口。由于继承与接口的存在，某种类型可能可以被认作多种其它类型，或与多种其它类型向兼容，被认作同一个身份的多个对象也可能根据其子身份以不同的方式运作，以上这些特性即是**多态**。在严格模型下，此种类型就不会简单地被看作只有一种单一的身份，不会被笼统地概括为“对象”。这就需要额外的计算，并且不允许出现未知的继承关系，但此时类型之间的关系就会十分明确，并且可以将**多态**的一些优点应用到面向切面编程（AOP）中去。  
+
 &emsp;&emsp;需要注意的是，存在继承关系的类型就会有多个身份，且这些身份的存在不全是并列的。观察以下类型：
 ```Java
 public final class Integer extends Number
@@ -83,10 +86,15 @@ public final class Integer extends Number
  +--------+
  | Object |
  +--------+
-      | extends
- +--------+                            
- | Number |  +------------+ +-----------+ +--------------+
- +--------+  | Comparable | | Constable | | ConstantDesc |
+      |      +--------------+
+      |      | Serializable |
+      |      +--------------+
+      | extends    |
+ +--------+        |                   
+ | Number |<-------+
+ +--------+ implements
+      |      +------------+ +-----------+ +--------------+
+      |      | Comparable | | Constable | | ConstantDesc |
       |      +------------+ +-----------+ +--------------+
       | extends    |              |              |
  +---------+       |              |              |
@@ -101,9 +109,25 @@ public final class Integer extends Number
 #1 # java.lang.constant.Constable
 #1 # java.lang.constant.ConstantDesc
 #2 @ java.lang.Number
-#3 @ java.lang.Object
+#3 # java.io.Serializable
+#4 @ java.lang.Object
 ```
-&emsp;&emsp;可知，```Integer``` 类型实现的三个接口类型（```Comparable```、```Constable```、```ConstantDesc```）而拥有的三个身份是并列关系。这种现象会为实现多态化特性的过程带来副作用，比如存在二义性等，并且这些问题在 Java 语言本身中就已有体现，如下例：
+&emsp;&emsp;同样地，不同类型在本模型内的表示如下例（解析描述符、解析类型分别表示该 Java 类型在本模型下对应的描述符与类型）：  
+
+| Java 类型           | 解析描述符              | 解析类型列表（含优先级）         |
+| ------------------- | ---------------------- | ------------------------------ |
+| int                 | I                      | #0&ensp;&ensp;&ensp;int                       
+| double              | D                      | #0&ensp;&ensp;&ensp;double                    
+| short               | S                      | #0&ensp;&ensp;&ensp;short                     
+| java.lang.Object    | Ljava/lang/Object;     | #0&ensp;&ensp;&ensp;java.lang.Object          
+| java.lang.Override  | Ljava/lang/Override;   | #0&ensp;&ensp;&ensp;java.lang.Override<br>#1&ensp;@&ensp;java.lang.Object        
+| java.lang.Number    | Ljava/lang/Number;     | #0&ensp;&ensp;&ensp;java.lang.Number<br>#1&ensp;#&ensp;java.io.Serializable<br>#2&ensp;@&ensp;java.lang.Object
+| java.lang.Exception | Ljava/lang/Exception;  | #0&ensp;&ensp;&ensp;java.lang.Exception<br>#1&ensp;@&ensp;java.lang.Throwable<br>#2&ensp;#&ensp;java.io.Serializable<br>#3&ensp;@&ensp;java.lang.Object
+| java.lang.Integer   | Ljava/lang/Integer;    | #0&ensp;&ensp;&ensp;java.lang.Integer<br>#1&ensp;#&ensp;java.lang.Comparable<br>#1&ensp;#&ensp;java.lang.constant.Constable<br>#1&ensp;#&ensp;java.lang.constant.ConstantDesc<br>#2&ensp;@&ensp;java.lang.Number<br>#3&ensp;#&ensp;java.io.Serializable<br>#4&ensp;@&ensp;java.lang.Object<br>
+
+#### <a id = "2-3-1">2.3.1&nbsp;多重继承</a>
+
+&emsp;&emsp;由上文可知，```Integer``` 类型实现的三个接口类型（```Comparable```、```Constable```、```ConstantDesc```）而拥有的三个身份是并列关系。这种现象会为实现多态化特性的过程带来副作用，比如存在二义性等，并且这些问题在 Java 语言本身中就已有体现，如下例：
 ```Java
 public static interface B {
     public default void foo()
@@ -171,11 +195,11 @@ public class A implements B, C {
 Error: java: 类型 B 和 C 不兼容;
         两者都定义了 foo(), 但却带有不相关的返回类型
 ```
-&emsp;&emsp;此种错误无法用重载 ```foo()``` 函数的方法解决，且解决方案只有不同时实现接口类型 ```B``` 与 ```C```。
+&emsp;&emsp;此种错误无法用重载 ```foo()``` 函数的方法解决，且解决方案只有不同时实现接口类型 ```B``` 与 ```C```。  
 
-// TODO  
-  
-&emsp;&emsp;不同类型在本模型内的表示如下例（解析描述符、解析类型分别表示该 Java 类型在本模型下对应的描述符与类型）：
+#### <a id = "2-3-2">2.3.2&nbsp;类型匹配</a>
+&emsp;&emsp;**类型匹配**即对数据类型的模式匹配。对于一些为面向切面编程（AOP）设计的多态化特性与功能，会根据数据类型的不同进行不同的操作以及生成不同的代码，故**类型匹配**是必须的。而在本严格模型的环境之下，**类型匹配**的过程中必须要考虑多重继承所带来的副作用，故**类型匹配**的过程必须遵循一些特殊的规则。
+
 
 // TODO
 
