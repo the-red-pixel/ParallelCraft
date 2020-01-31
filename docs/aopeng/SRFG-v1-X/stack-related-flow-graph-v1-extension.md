@@ -59,14 +59,14 @@ Array     | [      |  1  | 数组引用    |
 &emsp;&emsp;松散模型完全采用第 [2.1](#2-1) 节中所描述的分类方式，且松散模型仅计算以上十种基本类型，所有的对象都被视为 ```Reference``` 类型，而所有的数组对象都被视为 ```Array``` 类型。此种类型模型较为简单，开销较小，不需要预先提供并计算具体类型的继承关系，但多态化的程度也因此受到限制，仅能支持一些基本的多态化特性。  
 &emsp;&emsp;不同类型在本模型内的表示如下例（解析描述符、解析类型分别表示该 Java 类型在本模型下对应的描述符与类型）：  
 
-| Java类型           | 解析描述符 | 解析类型   |
-| ----------------- | ---------- | --------- | 
-| int               | I          | Integer   |
-| double            | D          | Double    |
-| short             | S          | Short     |
-| java.lang.Object  | L          | Reference |
-| java.lang.Integer | L          | Reference |
-| java.lang.String  | L          | Reference |
+| Java类型           | 解析描述符       | 解析类型         |
+| ----------------- | ---------------- | --------------- | 
+| int               | ```I```          | ```Integer```   |
+| double            | ```D```          | ```Double```    |
+| short             | ```S```          | ```Short```     |
+| java.lang.Object  | ```L```          | ```Reference``` |
+| java.lang.Integer | ```L```          | ```Reference``` |
+| java.lang.String  | ```L```          | ```Reference``` |
 
 
 ### <a id = "2-3">2.3&nbsp;严格模型</a>
@@ -102,9 +102,9 @@ public final class Integer extends Number
  +---------+ implements
 ```
 &emsp;&emsp;观察此继承树可知，类型的不同身份实际上存在一定的层次区别。并且一般地，类型的继承树遵循自顶向下的原则，即越靠近顶端的类型越抽象，越靠近底端的类型越具象，这也是类型继承的核心理念。而 Java 中接口（Interface）的存在也使得类型的继承树中可能出现不同身份并列的情况，使得我们不得不考虑**多重继承**可能带来的副作用。  
-&emsp;&emsp;本模型规定在此情况下，其不同身份的优先级如下（数字编号越小优先级越高，前缀为 ```#``` 表示实现接口，```@``` 表示继承，无前缀表示本类型自身）：
+&emsp;&emsp;本模型规定在此情况下，其不同身份的优先级如下（数字编号越小优先级越高，前缀为 ```#``` 表示实现接口，```@``` 表示继承，无前缀或 ```>``` 表示本类型自身）：
 ```
-#0   java.lang.Integer
+#0 > java.lang.Integer
 #1 # java.lang.Comparable
 #1 # java.lang.constant.Constable
 #1 # java.lang.constant.ConstantDesc
@@ -116,14 +116,14 @@ public final class Integer extends Number
 
 | Java 类型           | 解析描述符              | 解析类型列表（含优先级）         |
 | ------------------- | ---------------------- | ------------------------------ |
-| int                 | I                      | #0&ensp;&ensp;&ensp;int                       
-| double              | D                      | #0&ensp;&ensp;&ensp;double                    
-| short               | S                      | #0&ensp;&ensp;&ensp;short                     
-| java.lang.Object    | Ljava/lang/Object;     | #0&ensp;&ensp;&ensp;java.lang.Object          
-| java.lang.Override  | Ljava/lang/Override;   | #0&ensp;&ensp;&ensp;java.lang.Override<br>#1&ensp;@&ensp;java.lang.Object        
-| java.lang.Number    | Ljava/lang/Number;     | #0&ensp;&ensp;&ensp;java.lang.Number<br>#1&ensp;#&ensp;java.io.Serializable<br>#2&ensp;@&ensp;java.lang.Object
-| java.lang.Exception | Ljava/lang/Exception;  | #0&ensp;&ensp;&ensp;java.lang.Exception<br>#1&ensp;@&ensp;java.lang.Throwable<br>#2&ensp;#&ensp;java.io.Serializable<br>#3&ensp;@&ensp;java.lang.Object
-| java.lang.Integer   | Ljava/lang/Integer;    | #0&ensp;&ensp;&ensp;java.lang.Integer<br>#1&ensp;#&ensp;java.lang.Comparable<br>#1&ensp;#&ensp;java.lang.constant.Constable<br>#1&ensp;#&ensp;java.lang.constant.ConstantDesc<br>#2&ensp;@&ensp;java.lang.Number<br>#3&ensp;#&ensp;java.io.Serializable<br>#4&ensp;@&ensp;java.lang.Object<br>
+| int                 | ```I```                      | ```#0 > int```                       
+| double              | ```D```                      | ```#0 > double```                  
+| short               | ```S```                      | ```#0 > short```
+| java.lang.Object    | ```Ljava/lang/Object;```     | ```#0 > java.lang.Object```
+| java.lang.Override  | ```Ljava/lang/Override;```   | ```#0 > java.lang.Override```<br>```#1 @ java.lang.Object```        
+| java.lang.Number    | ```Ljava/lang/Number;```     | ```#0 > java.lang.Number```<br>```#1 # java.io.Serializable```<br>```#2 @ java.lang.Object```
+| java.lang.Exception | ```Ljava/lang/Exception;```  | ```#0 > java.lang.Exception```<br>```#1 @ java.lang.Throwable```<br>```#2 # java.io.Serializable```<br>```#3 @ java.lang.Object```
+| java.lang.Integer   | ```Ljava/lang/Integer;```    | ```#0 > java.lang.Integer```<br>```#1 # java.lang.Comparable```<br>```#1 # java.lang.constant.Constable```<br>```#1 # java.lang.constant.ConstantDesc```<br>```#2 @ java.lang.Number```<br>```#3 # java.io.Serializable```<br>```#4 @ java.lang.Object```
 
 #### <a id = "2-3-1">2.3.1&nbsp;多重继承</a>
 
